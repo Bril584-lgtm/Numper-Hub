@@ -77,22 +77,23 @@ async def fetch(title: str, ep: int) -> list[dict]:
         return []
     try:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            # Step 1 — find show sd_id
-            r1 = await client.get(_API, params={"api_key": api_key, "film_name": title, "type": "tv"})
-            if r1.status_code != 200:
+            # Step 1 — find show sd_id; try tv first, fall back to no-type filter
+            sd_id = None
+            for extra in [{"type": "tv"}, {}]:
+                r1 = await client.get(_API, params={"api_key": api_key, "film_name": title, **extra})
+                if r1.status_code == 200:
+                    shows = r1.json().get("results") or []
+                    if shows:
+                        sd_id = shows[0]["sd_id"]
+                        break
+            if not sd_id:
                 return []
-            shows = r1.json().get("results") or []
-            if not shows:
-                return []
-            sd_id = shows[0]["sd_id"]
 
-            # Step 2 — get subtitle entries for this episode
+            # Step 2 — get subtitle entries for this episode (no season filter — anime varies)
             r2 = await client.get(_API, params={
                 "api_key": api_key,
                 "sd_id": sd_id,
-                "season_number": 1,
                 "episode_number": ep,
-                "type": "tv",
                 "languages": "EN",
             })
             if r2.status_code != 200:

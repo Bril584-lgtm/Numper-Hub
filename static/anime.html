@@ -1238,6 +1238,7 @@ function loadStream(url, type) {
   const video = $('video');
   if (hls) { hls.destroy(); hls = null; }
   _clearSubTracks();
+  _clearCcTrack();
 
   function onReady() {
     hide($('loading-overlay'));
@@ -1333,6 +1334,15 @@ $('video').addEventListener('timeupdate', () => {
     recapBtn.style.display = (t >= start && t < end) ? '' : 'none';
   }
 });
+
+function _clearCcTrack() {
+  const oldUrl = ccTrack.src;
+  ccTrack.src = '';
+  if (oldUrl?.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+  ccTrack.track.mode = 'disabled';
+  ccBtn.classList.remove('on');
+  ccBtn.title = 'Toggle captions';
+}
 
 // ─── Subtitle track menu ──────────────────────────────────
 function _clearSubTracks() {
