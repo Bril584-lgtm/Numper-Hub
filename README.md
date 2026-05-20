@@ -1,6 +1,6 @@
 # Numper Hub
 
-A local web app for browsing and watching Movies, TV shows, Spanish content, Anime, and Hentai — no ads, no accounts, launches straight from your PC.
+A local web app for browsing and watching Anime, Movies, TV shows, Spanish content, and Hentai — all in one place, no ads, no accounts, launches straight from your PC.
 
 ---
 
@@ -18,23 +18,36 @@ A local web app for browsing and watching Movies, TV shows, Spanish content, Ani
 
 | Section | Theme | Content |
 |---|---|---|
+| ⛩️ Anime | Orange | Anime series and films — sub & dub, A-Z browse, skip intro |
 | 🎬 Movies & TV | Crimson | Hollywood films, TV series, trending content |
 | 🌎 Spanish | Amber/Gold | Telenovelas, películas, series en español |
-| ⛩️ Anime | Purple | Anime series and films via Numper Ani |
 | 🔞 Hentai | Pink | Adult anime — 18+ only |
 
 ---
 
 ## Features
 
+**Anime**
+- AniList-powered home — trending hero, genre rows, continue watching
+- Search across AllAnime, GogoAnime, and AnimePahe simultaneously
+- A-Z browse with DUB / NSFW toggles
+- Provider switcher — switch between sources with one click
+- Full-screen HLS.js player — best quality locked automatically
+- Skip Intro / Skip Recap buttons (AniSkip)
+- Auto subtitles (Jimaku.cc)
+- Watch history
+
+**Movies & TV / Spanish**
 - Auto-rotating hero banner with trending titles
-- Genre/category rows with horizontal scroll
+- Genre rows with horizontal scroll
 - Live search with poster suggestions
-- Full details modal — synopsis, tags, genres, rating
-- TV shows: season selector + full episode grid
-- HLS.js direct playback — best quality automatically selected
-- 30-minute response cache for fast repeat loads
-- Single launcher starts all servers at once
+- Season selector + full episode grid for TV shows
+- Inline iframe player
+
+**Hentai**
+- Browse by Trending, New, or All-Time
+- Live search with suggestions
+- HLS.js direct playback — best quality automatically
 
 ---
 
@@ -42,32 +55,21 @@ A local web app for browsing and watching Movies, TV shows, Spanish content, Ani
 
 - Python 3.10+
 - A free TMDB API key — [get one here](https://www.themoviedb.org/settings/api)
-- Both **Numper Hub** and **Numper Ani** cloned into the same parent folder
 
 ---
 
 ## Installation
 
-### 1. Clone both repos into the same folder
-
-```
-parent-folder/
-├── Numper-Hub/
-└── Numper-Ani/
-```
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/Bril584-lgtm/Numper-Hub.git
-git clone https://github.com/Bril584-lgtm/Numper-Ani.git
+cd Numper-Hub
 ```
 
-### 2. Install dependencies for both
+### 2. Install dependencies
 
 ```bash
-cd Numper-Hub
-pip install -r requirements.txt
-
-cd ../Numper-Ani
 pip install -r requirements.txt
 ```
 
@@ -79,7 +81,7 @@ playwright install chromium
 
 ### 4. Set up your TMDB API key
 
-Create a file called `.env` inside the `Numper-Hub` folder:
+Create a `.env` file inside the `Numper-Hub` folder:
 
 ```
 TMDB_API_KEY=your_token_here
@@ -91,24 +93,25 @@ Get a free key at [themoviedb.org/settings/api](https://www.themoviedb.org/setti
 
 ## Run
 
-Double-click `launch_all.bat` inside `Numper-Hub`.
+Double-click `launch_all.bat` — starts the server and opens your browser automatically.
 
-This starts both servers and opens your browser to the Hub automatically.
+Or from the terminal:
 
-| App | URL |
-|---|---|
-| Numper Hub | http://127.0.0.1:7778 |
-| Numper Ani | http://127.0.0.1:8000 |
+```bash
+python main.py
+```
 
-Press `Ctrl+C` in the terminal to stop both servers.
+Opens at **http://127.0.0.1:7778**
 
 ---
 
 ## Stack
 
 - **Backend:** FastAPI + uvicorn
-- **Metadata:** TMDB API
-- **Movies/TV Streams:** vidsrc.to / vidsrc.me / embed.su
-- **Hentai Streams:** hanime.tv unofficial API
+- **Anime metadata:** AniList GraphQL API + Jikan (MyAnimeList)
+- **Anime streams:** AllAnime, GogoAnime, AnimePahe
+- **Movies/TV metadata:** TMDB API
+- **Movies/TV streams:** vidsrc.to / vidsrc.me / embed.su
+- **Hentai streams:** hanime.tv unofficial API
 - **Embed extraction:** Playwright (headless Chromium)
 - **Frontend:** Vanilla JS, HLS.js — no frameworks
