@@ -11,7 +11,7 @@ HUB_DIR  = Path(__file__).parent
 
 if __name__ == "__main__":
     print("=" * 48)
-    print(f"  Numper Hub  →  http://127.0.0.1:{HUB_PORT}")
+    print(f"  Numper Hub  ->  http://127.0.0.1:{HUB_PORT}")
     print("  Anime · Movies · Spanish · Hentai")
     print("  Press Ctrl+C to stop")
     print("=" * 48)
