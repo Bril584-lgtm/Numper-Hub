@@ -1,5 +1,6 @@
 """Numper Hub — entry point."""
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -8,6 +9,7 @@ from pathlib import Path
 
 PORT = 7778
 ENV_FILE = Path(__file__).parent / ".env"
+HERE = Path(__file__).parent.resolve()
 
 
 def _load_env():
@@ -44,9 +46,69 @@ def _prompt_tmdb_key():
     print("Key saved to .env\n")
 
 
+def _desktop():
+    if platform.system() == "Windows":
+        result = subprocess.run(
+            ["powershell", "-Command", "[Environment]::GetFolderPath('Desktop')"],
+            capture_output=True, text=True,
+        )
+        p = result.stdout.strip()
+        return Path(p) if p else Path.home() / "Desktop"
+    return Path.home() / "Desktop"
+
+
+def _shortcut_path():
+    system = platform.system()
+    desktop = _desktop()
+    if system == "Windows":
+        return desktop / "Numper Hub.lnk"
+    elif system == "Darwin":
+        return desktop / "Numper Hub.command"
+    else:
+        return desktop / "numper-hub.desktop"
+
+
+def _create_shortcut():
+    system = platform.system()
+    path = _shortcut_path()
+    try:
+        if system == "Windows":
+            python = Path(sys.executable).resolve()
+            ps = (
+                f'$ws = New-Object -ComObject WScript.Shell;'
+                f'$s = $ws.CreateShortcut("{path}");'
+                f'$s.TargetPath = "{python}";'
+                f'$s.Arguments = "numper-hub.py";'
+                f'$s.WorkingDirectory = "{HERE}";'
+                f'$s.Save()'
+            )
+            subprocess.run(["powershell", "-Command", ps], capture_output=True)
+        elif system == "Darwin":
+            path.write_text(f'#!/bin/bash\ncd "{HERE}" && python3 numper-hub.py\n')
+            os.chmod(path, 0o755)
+        else:
+            path.write_text(
+                f"[Desktop Entry]\nType=Application\nName=Numper Hub\n"
+                f'Exec=bash -c "cd {HERE} && python3 numper-hub.py"\nTerminal=true\n'
+            )
+            os.chmod(path, 0o755)
+        print(f"Shortcut created: {path}\n")
+    except Exception as e:
+        print(f"Couldn't create shortcut: {e}\n")
+
+
+def _maybe_offer_shortcut():
+    if _shortcut_path().exists():
+        return
+    ans = input("Create a desktop shortcut? [y/n]: ").strip().lower()
+    if ans == "y":
+        _create_shortcut()
+
+
 def main():
     _load_env()
     _prompt_tmdb_key()
+    _maybe_offer_shortcut()
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "server:app", "--host", "127.0.0.1", "--port", str(PORT)],
         cwd=Path(__file__).parent,
