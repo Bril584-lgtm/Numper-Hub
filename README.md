@@ -1,12 +1,12 @@
 # Numper Hub
 
-A local web app for browsing and watching Anime, Movies, TV shows, Spanish content, and Hentai — all in one place, no ads, no accounts, launches straight from your PC.
+A local web app for browsing and watching Anime, Movies, TV shows, Spanish content, and Hentai — all in one place, no ads, no subscriptions, launches straight from your terminal.
 
 ---
 
 ## Anime only?
 
-If you just want the anime section as a standalone app, check out **[Numper Ani](https://github.com/Bril584-lgtm/Numper-Ani)** — no API key required.
+If you just want the anime section as a standalone app, check out **[Numper Ani](https://github.com/Bril584-lgtm/Numper-Ani)**.
 
 ---
 
@@ -31,147 +31,63 @@ If you just want the anime section as a standalone app, check out **[Numper Ani]
 
 ---
 
-## Full Setup Guide
+## Setup
 
-Follow every step carefully. This should take about 10 minutes total.
+### Requirements
 
----
+- **Python 3.10+** — [python.org/downloads](https://www.python.org/downloads) *(check "Add Python to PATH" during install)*
 
-### Step 1 — Install Python
+No Git required — download the repo as a ZIP from the green **Code** button → **Download ZIP**, then extract it.
 
-1. Go to **https://www.python.org/downloads**
-2. Click the big yellow **Download Python** button
-3. Run the installer
-4. ⚠️ **IMPORTANT:** On the first screen, check the box that says **"Add Python to PATH"** before clicking Install
-5. Click **Install Now** and wait for it to finish
-6. To verify it worked, open Command Prompt and type:
-   ```
-   python --version
-   ```
-   You should see something like `Python 3.12.0`
+### Install dependencies
 
----
-
-### Step 2 — Install Git
-
-1. Go to **https://git-scm.com/downloads**
-2. Click **Download for Windows**
-3. Run the installer — click Next through all the options, defaults are fine
-4. To verify it worked, open Command Prompt and type:
-   ```
-   git --version
-   ```
-   You should see something like `git version 2.43.0`
-
----
-
-### Step 3 — Download Numper Hub
-
-Open **Command Prompt** and run these commands one at a time:
-
-```
-git clone https://github.com/Bril584-lgtm/Numper-Hub.git
-cd Numper-Hub
-```
-
-This downloads the project to your PC into a folder called `Numper-Hub`.
-
----
-
-### Step 4 — Install Dependencies
-
-Still inside Command Prompt in the `Numper-Hub` folder, run:
+Open a terminal in the `Numper-Hub` folder and run:
 
 ```
 pip install -r requirements.txt
-```
-
-Wait for it to finish. This installs FastAPI, Playwright, and all required libraries.
-
----
-
-### Step 5 — Install the Browser (for stream extraction)
-
-Run this command:
-
-```
 playwright install chromium
 ```
 
-This downloads a small headless browser that Numper Hub uses to extract streams from video sites.
+### API Key (Movies & TV only)
 
----
+The Movies and Spanish sections use TMDB for metadata. Get a free API key at **https://www.themoviedb.org/settings/api**.
 
-### Step 6 — Get a Free TMDB API Key
+When you launch the app for the first time without a key configured, it will prompt you to paste one in — the `.env` file is created automatically.
 
-Numper Hub needs a free API key from TMDB (The Movie Database) to load movie and TV show info.
-
-1. Go to **https://www.themoviedb.org/signup** and create a free account
-2. Check your email and verify your account
-3. Go to **https://www.themoviedb.org/settings/api**
-4. Click **Create** → choose **Developer**
-5. Fill in the form:
-   - Application Name: `Numper Hub`
-   - Application URL: `http://localhost:7778`
-   - Application Summary: `Personal local media browser`
-   - Select **Personal** for intended use
-6. Submit — your key will appear on the page
-7. Copy the **API Read Access Token** (the long one starting with `eyJ...`)
-
----
-
-### Step 7 — Add Your API Key
-
-1. Open the `Numper-Hub` folder on your PC
-2. Create a new text file called `.env` (just `.env`, no other name)
-3. Open it with Notepad and type exactly this — replacing the placeholder with your actual token:
-   ```
-   TMDB_API_KEY=your_token_here
-   ```
-4. Save the file
-
-> **Note:** If Windows won't let you name it `.env`, open Notepad, type the line above, then go to File → Save As → change "Save as type" to "All Files" → type `.env` as the filename → Save.
-
----
-
-### Step 8 — Launch
-
-Double-click **`launch_all.bat`** inside the `Numper-Hub` folder.
-
-A terminal window will open and your browser will automatically go to:
+### Launch
 
 ```
-http://127.0.0.1:7778
+python numper-hub.py
 ```
 
-You'll see the hub with all four sections ready to use.
-
-> To stop the app, close the terminal window or press `Ctrl+C` inside it.
+Your browser opens automatically at `http://127.0.0.1:7778`. Press `Ctrl+C` to stop.
 
 ---
 
 ## Every Time You Want to Use It
 
-Just double-click **`launch_all.bat`**. That's it.
+```
+python numper-hub.py
+```
 
 ---
 
 ## Troubleshooting
 
 **`python` is not recognized**
-→ You forgot to check "Add Python to PATH" during install. Uninstall Python and reinstall, making sure to check that box.
+→ Python isn't on your PATH. Reinstall it and check the "Add Python to PATH" box.
 
 **`pip install` fails**
-→ Try running Command Prompt as Administrator (right-click → Run as administrator) and run the command again.
+→ Try running the terminal as Administrator.
 
-**Browser opens but shows nothing / blank page**
-→ Your `.env` file is missing or the API key is wrong. Double-check Step 7.
+**Movies/Spanish shows nothing**
+→ Your TMDB API key is missing or invalid. Delete `.env` and re-run the launcher to enter a new key.
 
 **Stream doesn't play / 502 error**
-→ The stream source may be temporarily down. Try a different anime or movie, or wait a few minutes and try again.
+→ The stream source may be temporarily down. Try a different title or wait a few minutes.
 
 **`playwright install` takes a long time**
-→ That's normal — it's downloading a browser. Let it finish.
+→ Normal — it's downloading a browser. Let it finish.
 
 ---
 
