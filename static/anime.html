@@ -1747,7 +1747,7 @@ async function loadHomepage() {
   document.querySelector('main').classList.add('home-active');
   show($('hero-loading'));
   const [homeRes, history] = await Promise.all([
-    fetch(`/api/home?nsfw=${nsfwMode}`).then(r => r.json()).catch(() => ({ trending: [], rows: [] })),
+    fetch(`/api/anime/home?nsfw=${nsfwMode}`).then(r => r.json()).catch(() => ({ trending: [], rows: [] })),
     fetchHistory(),
   ]);
 
