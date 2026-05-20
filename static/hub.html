@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Numper Hub</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --red: #e50914;
+    --red-dark: #b0070f;
+    --amber: #f5a623;
+    --amber-dark: #c07d0a;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    padding: 2rem;
+  }
+  .logo {
+    text-align: center;
+    user-select: none;
+  }
+  .logo h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #fff 40%, #aaa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .logo p {
+    color: var(--muted);
+    font-size: .95rem;
+    margin-top: .35rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .cards {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .card {
+    width: 300px;
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .card:hover { transform: translateY(-6px); }
+  .card-movies {
+    background: linear-gradient(160deg, #1a0a0a 0%, #110000 100%);
+    border-color: #3a1010;
+  }
+  .card-movies::before { background: radial-gradient(circle at 60% 0%, rgba(229,9,20,.15), transparent 60%); }
+  .card-movies:hover { box-shadow: 0 12px 40px rgba(229,9,20,.35); border-color: var(--red); }
+  .card-movies:hover::before { opacity: 1; }
+  .card-spanish {
+    background: linear-gradient(160deg, #1a1200 0%, #110d00 100%);
+    border-color: #3a2a00;
+  }
+  .card-spanish::before { background: radial-gradient(circle at 60% 0%, rgba(245,166,35,.15), transparent 60%); }
+  .card-spanish:hover { box-shadow: 0 12px 40px rgba(245,166,35,.3); border-color: var(--amber); }
+  .card-spanish:hover::before { opacity: 1; }
+  .card-icon { font-size: 3rem; position: relative; z-index: 1; }
+  .card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    position: relative;
+    z-index: 1;
+  }
+  .card-movies .card-title { color: var(--red); }
+  .card-spanish .card-title { color: var(--amber); }
+  .card-desc {
+    font-size: .88rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+  .card-cta {
+    margin-top: .5rem;
+    padding: .55rem 1.6rem;
+    border-radius: 999px;
+    font-size: .88rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: filter .15s;
+  }
+  .card-movies .card-cta { background: var(--red); color: #fff; }
+  .card-spanish .card-cta { background: var(--amber); color: #000; }
+  .card:hover .card-cta { filter: brightness(1.15); }
+  footer {
+    color: var(--muted);
+    font-size: .78rem;
+    letter-spacing: .04em;
+  }
+</style>
+</head>
+<body>
+<div class="logo">
+  <h1>Numper Hub</h1>
+  <p>Choose your destination</p>
+</div>
+
+<div class="cards">
+  <a class="card card-movies" href="/movies">
+    <div class="card-icon">🎬</div>
+    <div class="card-title">Movies &amp; TV</div>
+    <div class="card-desc">Hollywood blockbusters, binge-worthy TV series, and everything in between.</div>
+    <button class="card-cta">Browse</button>
+  </a>
+
+  <a class="card card-spanish" href="/spanish">
+    <div class="card-icon">🌎</div>
+    <div class="card-title">Spanish</div>
+    <div class="card-desc">Telenovelas, películas, series — lo mejor del entretenimiento en español.</div>
+    <button class="card-cta">Explorar</button>
+  </a>
+</div>
+
+<footer>Numper Hub &mdash; all content sourced from public embeds</footer>
+</body>
+</html>
