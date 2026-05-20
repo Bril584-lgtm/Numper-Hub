@@ -3,6 +3,7 @@ import sys
 import os
 import time
 import threading
+import subprocess
 import webbrowser
 from pathlib import Path
 
@@ -12,41 +13,45 @@ ANI_DIR  = Path(__file__).parent.parent / "Numper-Ani"
 HUB_DIR  = Path(__file__).parent
 
 
-def run_hub():
-    import uvicorn
-    os.chdir(HUB_DIR)
-    sys.path.insert(0, str(HUB_DIR))
-    uvicorn.run("server:app", host="127.0.0.1", port=HUB_PORT, log_level="info")
+def stream(proc, prefix):
+    for line in iter(proc.stdout.readline, b""):
+        print(f"[{prefix}] {line.decode(errors='ignore').rstrip()}", flush=True)
 
 
-def run_ani():
-    if not ANI_DIR.exists():
-        print("[Numper Ani] Not found — skipping")
-        return
-    import uvicorn
-    os.chdir(ANI_DIR)
-    sys.path.insert(0, str(ANI_DIR))
-    uvicorn.run("server:app", host="127.0.0.1", port=ANI_PORT, log_level="info")
+def start(cwd, port, label):
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "server:app",
+         "--host", "127.0.0.1", "--port", str(port)],
+        cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+    )
+    threading.Thread(target=stream, args=(proc, label), daemon=True).start()
+    return proc
 
 
 if __name__ == "__main__":
     print("=" * 48)
-    print("  Numper Hub   →  http://127.0.0.1:7778")
-    print("  Numper Ani   →  http://127.0.0.1:8000")
-    print("  Press Ctrl+C to stop both servers")
+    print(f"  Numper Hub  →  http://127.0.0.1:{HUB_PORT}")
+    print(f"  Numper Ani  →  http://127.0.0.1:{ANI_PORT}")
+    print("  Ctrl+C to stop both")
     print("=" * 48)
 
-    t_ani = threading.Thread(target=run_ani, daemon=True)
-    t_hub = threading.Thread(target=run_hub, daemon=True)
+    procs = []
+    procs.append(start(HUB_DIR, HUB_PORT, "Hub"))
 
-    t_ani.start()
-    t_hub.start()
+    if ANI_DIR.exists():
+        procs.append(start(ANI_DIR, ANI_PORT, "Ani"))
+    else:
+        print(f"[Ani] Not found at {ANI_DIR} — skipping")
 
     time.sleep(2)
     webbrowser.open(f"http://127.0.0.1:{HUB_PORT}")
 
     try:
-        while True:
+        while all(p.poll() is None for p in procs):
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nShutting down...")
+        for p in procs:
+            p.terminate()
