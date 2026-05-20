@@ -97,6 +97,30 @@ def _create_shortcut():
         print(f"Couldn't create shortcut: {e}\n")
 
 
+def _prompt_jimaku_token():
+    if os.environ.get("JIMAKU_TOKEN"):
+        return
+    print("Anime subtitles use Jimaku.cc — get a free token at: https://jimaku.cc/settings")
+    print("(Press Enter to skip — subtitles won't auto-load but you can still load files manually)")
+    print()
+    token = input("Paste your Jimaku token (or press Enter to skip): ").strip()
+    if not token:
+        print()
+        return
+    os.environ["JIMAKU_TOKEN"] = token
+    existing = ENV_FILE.read_text() if ENV_FILE.exists() else ""
+    if "JIMAKU_TOKEN=" in existing:
+        lines = [
+            f"JIMAKU_TOKEN={token}" if l.startswith("JIMAKU_TOKEN=") else l
+            for l in existing.splitlines()
+        ]
+        ENV_FILE.write_text("\n".join(lines) + "\n")
+    else:
+        with open(ENV_FILE, "a") as f:
+            f.write(f"JIMAKU_TOKEN={token}\n")
+    print("Token saved to .env\n")
+
+
 def _maybe_offer_shortcut():
     if _shortcut_path().exists():
         return
@@ -108,6 +132,7 @@ def _maybe_offer_shortcut():
 def main():
     _load_env()
     _prompt_tmdb_key()
+    _prompt_jimaku_token()
     _maybe_offer_shortcut()
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "server:app", "--host", "127.0.0.1", "--port", str(PORT)],

@@ -48,11 +48,16 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-### API Key (Movies & TV only)
+### API Keys
 
-The Movies and Spanish sections use TMDB for metadata. Get a free API key at **https://www.themoviedb.org/settings/api**.
+The launcher will prompt you for these on first run and save them to `.env` automatically:
 
-When you launch the app for the first time without a key configured, it will prompt you to paste one in — the `.env` file is created automatically.
+| Key | Used for | Where to get it |
+|---|---|---|
+| TMDB API key | Movies & Spanish metadata | https://www.themoviedb.org/settings/api |
+| Jimaku token | Anime auto-subtitles | https://jimaku.cc/settings |
+
+Both are free. Both are optional — the relevant sections just won't work without them. You can still load subtitle files manually via the CC button in the player.
 
 ### Launch
 

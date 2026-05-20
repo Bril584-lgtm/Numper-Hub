@@ -1,16 +1,20 @@
-"""Subtitle fetcher — Jimaku.cc (anime-specific, no API key required)."""
+"""Subtitle fetcher — Jimaku.cc (anime-specific, free API token required)."""
+import os
 import httpx
 
 JIMAKU = "https://jimaku.cc/api"
 AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
-_HEADERS = {"User-Agent": AGENT, "Accept": "application/json"}
 _SUB_EXTS = (".srt", ".vtt", ".ass", ".ssa")
 
 
 async def fetch(title: str, ep: int) -> list[dict]:
     """Return list of {name, url} subtitle files for an episode. Empty list on any failure."""
+    token = os.getenv("JIMAKU_TOKEN", "")
+    if not token:
+        return []
+    headers = {"User-Agent": AGENT, "Accept": "application/json", "Authorization": f"Bearer {token}"}
     try:
-        async with httpx.AsyncClient(headers=_HEADERS, timeout=10, follow_redirects=True) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=10, follow_redirects=True) as client:
             # 1. Search for the anime entry
             r = await client.get(f"{JIMAKU}/entries/search", params={"query": title})
             entries = r.json() if r.status_code == 200 else []
