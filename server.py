@@ -53,6 +53,11 @@ async def spanish_page():
     return (STATIC / "spanish.html").read_text(encoding="utf-8")
 
 
+@app.get("/hentai", response_class=HTMLResponse)
+async def hentai_page():
+    return (STATIC / "hentai.html").read_text(encoding="utf-8")
+
+
 # ─── Health / key check ───────────────────────────────────────────────────────
 
 @app.get("/api/status")
@@ -155,6 +160,37 @@ async def api_suggest(q: str = Query(..., min_length=1), lang: str = Query(defau
     from sources.tmdb import search
     results = await search(q, language=lang)
     return {"results": [{"title": r["title"], "thumb": r["thumb"], "type": r["type"], "year": r["year"]} for r in results[:8]]}
+
+
+# ─── Hentai ───────────────────────────────────────────────────────────────────
+
+@app.get("/api/hentai/browse")
+async def api_hentai_browse(order: str = Query(default="views_month"), page: int = Query(default=0, ge=0)):
+    cache_key = f"hentai:browse:{order}:{page}"
+    cached = _cached(cache_key, 1800)
+    if cached:
+        return cached
+    from sources.hanime import browse
+    results = await browse(order_by=order, page=page)
+    return _store(cache_key, {"results": results})
+
+
+@app.get("/api/hentai/search")
+async def api_hentai_search(q: str = Query(..., min_length=1), page: int = Query(default=0, ge=0)):
+    from sources.hanime import search
+    results = await search(q, page=page)
+    return {"results": results}
+
+
+@app.get("/api/hentai/video")
+async def api_hentai_video(id: str = Query(...)):
+    cache_key = f"hentai:video:{id}"
+    cached = _cached(cache_key, 3600)
+    if cached:
+        return cached
+    from sources.hanime import get_video
+    data = await get_video(id)
+    return _store(cache_key, data)
 
 
 # ─── Proxy ────────────────────────────────────────────────────────────────────

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Numper H</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0008;
+    --surface: #140010;
+    --surface2: #1c0018;
+    --border: #2e0025;
+    --text: #f5e0f0;
+    --muted: #9e6a8a;
+    --accent: #e91e8c;
+    --accent-dim: rgba(233,30,140,.18);
+    --radius: 10px;
+  }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,0,8,.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1rem;
+    padding: .7rem 1.4rem;
+  }
+  .nav-logo { font-weight: 800; font-size: 1.15rem; color: var(--accent); text-decoration: none; flex-shrink: 0; }
+  .nav-logo span { color: var(--text); }
+  .search-wrap { position: relative; flex: 1; max-width: 420px; }
+  #search { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: .45rem 1rem .45rem 2.4rem; color: var(--text); font-size: .9rem; outline: none; transition: border-color .15s; }
+  #search::placeholder { color: var(--muted); }
+  #search:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  #suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; z-index: 200; display: none; }
+  .sug-item { display: flex; align-items: center; gap: .7rem; padding: .5rem .8rem; cursor: pointer; transition: background .1s; font-size: .88rem; }
+  .sug-item:hover { background: var(--surface2); }
+  .sug-thumb { width: 32px; height: 46px; object-fit: cover; border-radius: 4px; background: #222; flex-shrink: 0; }
+  .sug-info { display: flex; flex-direction: column; gap: .1rem; }
+  .sug-title { font-weight: 600; }
+  .sug-meta { color: var(--muted); font-size: .78rem; }
+  .nav-back { color: var(--muted); font-size: .85rem; text-decoration: none; white-space: nowrap; }
+  .nav-back:hover { color: var(--text); }
+  .sort-wrap { display: flex; gap: .5rem; }
+  .sort-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: .78rem; padding: .3rem .85rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .sort-btn.active, .sort-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* ── HERO ── */
+  #hero { position: relative; height: 72vh; min-height: 360px; max-height: 580px; overflow: hidden; }
+  #hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; transition: background-image .4s; }
+  #hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg) 0%, rgba(10,0,8,.55) 50%, rgba(10,0,8,.2) 100%); }
+  #hero-content { position: absolute; bottom: 2.5rem; left: 2.5rem; right: 2.5rem; z-index: 2; max-width: 540px; }
+  #hero-badge { display: inline-block; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 4px; margin-bottom: .6rem; }
+  #hero-title { font-size: 2.4rem; font-weight: 800; line-height: 1.1; margin-bottom: .5rem; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+  #hero-tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .8rem; }
+  .hero-tag { background: rgba(233,30,140,.2); border: 1px solid rgba(233,30,140,.4); border-radius: 999px; font-size: .72rem; padding: .15rem .55rem; color: var(--accent); }
+  .hero-actions { display: flex; gap: .7rem; }
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.3rem; border-radius: 6px; font-size: .9rem; font-weight: 600; border: none; cursor: pointer; transition: filter .15s, transform .1s; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: rgba(255,255,255,.15); color: var(--text); backdrop-filter: blur(4px); }
+  .btn:hover { filter: brightness(1.12); }
+  .trending-dots { position: absolute; bottom: 1rem; right: 2rem; z-index: 2; display: flex; gap: .4rem; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.3); cursor: pointer; transition: background .2s, transform .2s; }
+  .dot.active { background: var(--accent); transform: scale(1.3); }
+
+  /* ── ROWS ── */
+  #rows { padding: 1.5rem 1.4rem 4rem; }
+  .row { margin-bottom: 2.2rem; }
+  .row-label { font-size: 1rem; font-weight: 700; margin-bottom: .8rem; }
+  .row-scroll { display: flex; gap: .8rem; overflow-x: auto; padding-bottom: .5rem; scrollbar-width: none; }
+  .row-scroll::-webkit-scrollbar { display: none; }
+  .card { flex-shrink: 0; width: 130px; cursor: pointer; }
+  .card-img { width: 130px; height: 190px; object-fit: cover; border-radius: var(--radius); background: var(--surface2); display: block; transition: transform .18s, box-shadow .18s; }
+  .card:hover .card-img { transform: scale(1.04); box-shadow: 0 8px 28px rgba(233,30,140,.35); }
+  .card-title { font-size: .78rem; font-weight: 600; margin-top: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+
+  /* ── MODAL ── */
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
+  #modal-overlay.open { display: flex; }
+  #modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 860px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid var(--border); }
+  #modal-close { position: absolute; top: .8rem; right: .9rem; background: rgba(0,0,0,.6); border: none; color: var(--text); font-size: 1.1rem; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+  #modal-banner { width: 100%; height: 240px; object-fit: cover; border-radius: 14px 14px 0 0; background: var(--surface2); display: block; }
+  #modal-body { padding: 1.3rem 1.5rem 1.5rem; }
+  #modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem; }
+  #modal-brand { font-size: .82rem; color: var(--muted); margin-bottom: .6rem; }
+  #modal-tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .8rem; }
+  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: .18rem .5rem; font-size: .75rem; color: var(--muted); cursor: pointer; transition: all .1s; }
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  #modal-synopsis { color: #c4a0b4; font-size: .88rem; line-height: 1.6; margin-bottom: 1.2rem; }
+
+  /* ── PLAYER ── */
+  #player-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; display: none; margin-bottom: .8rem; }
+  #player-wrap.open { display: block; }
+  #player { width: 100%; height: 100%; display: block; }
+  #player-loading { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem; font-size: .9rem; color: var(--muted); }
+  .spinner-sm { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 3rem auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/"><span>Numper</span> H</a>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="search" type="text" placeholder="Search…" autocomplete="off">
+    <div id="suggestions"></div>
+  </div>
+  <div class="sort-wrap">
+    <button class="sort-btn active" data-order="views_month">🔥 Trending</button>
+    <button class="sort-btn" data-order="created_at_unix">✨ New</button>
+    <button class="sort-btn" data-order="views_all">👁 All-Time</button>
+  </div>
+  <a class="nav-back" href="/">← Hub</a>
+</nav>
+
+<div id="hero">
+  <div id="hero-bg"></div>
+  <div id="hero-content">
+    <div id="hero-badge">Popular</div>
+    <div id="hero-title">Loading…</div>
+    <div id="hero-tags"></div>
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="hero-play">▶ Watch</button>
+      <button class="btn btn-secondary" id="hero-info">ⓘ More Info</button>
+    </div>
+  </div>
+  <div class="trending-dots" id="dots"></div>
+</div>
+
+<div id="rows"></div>
+
+<!-- modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <button id="modal-close">✕</button>
+    <img id="modal-banner" src="" alt="">
+    <div id="modal-body">
+      <div id="modal-title"></div>
+      <div id="modal-brand"></div>
+      <div id="modal-tags"></div>
+      <div id="modal-synopsis"></div>
+      <div id="player-wrap">
+        <video id="player" controls></video>
+        <div id="player-loading"><div class="spinner-sm"></div>Loading stream…</div>
+      </div>
+      <button class="btn btn-primary" id="modal-play">▶ Watch Now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let _featured = [], _heroIdx = 0, _heroTimer = null;
+let _currentOrder = 'views_month';
+let _hls = null;
+
+// ── Home ──────────────────────────────────────────────────────────────────────
+async function loadHome(order = 'views_month') {
+  _currentOrder = order;
+  const res = await fetch(`${API}/api/hentai/browse?order=${order}&page=0`);
+  const data = await res.json();
+  const items = data.results || [];
+  _featured = items.slice(0, 8);
+  _heroIdx = 0;
+  renderHero();
+  renderRows(items);
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+function renderHero() {
+  if (!_featured.length) return;
+  const item = _featured[_heroIdx];
+  document.getElementById('hero-bg').style.backgroundImage = `url('${item.thumb}')`;
+  document.getElementById('hero-title').textContent = item.title;
+  document.getElementById('hero-tags').innerHTML = (item.tags || []).slice(0, 4).map(t => `<span class="hero-tag">${t}</span>`).join('');
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  _featured.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === _heroIdx ? ' active' : '');
+    d.onclick = () => { _heroIdx = i; renderHero(); resetTimer(); };
+    dots.appendChild(d);
+  });
+  clearInterval(_heroTimer);
+  _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % _featured.length; renderHero(); }, 6000);
+}
+function resetTimer() { clearInterval(_heroTimer); _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % _featured.length; renderHero(); }, 6000); }
+document.getElementById('hero-play').onclick = () => _featured[_heroIdx] && openItem(_featured[_heroIdx]);
+document.getElementById('hero-info').onclick = () => _featured[_heroIdx] && openItem(_featured[_heroIdx]);
+
+// ── Rows ──────────────────────────────────────────────────────────────────────
+function renderRows(items) {
+  const container = document.getElementById('rows');
+  container.innerHTML = '';
+  if (!items.length) return;
+
+  const label = _currentOrder === 'views_month' ? '🔥 Trending This Month'
+              : _currentOrder === 'created_at_unix' ? '✨ New Releases'
+              : '👁 All-Time Most Viewed';
+
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.innerHTML = `<div class="row-label">${label}</div><div class="row-scroll"></div>`;
+  const scroll = div.querySelector('.row-scroll');
+  items.forEach(item => scroll.appendChild(makeCard(item)));
+  container.appendChild(div);
+}
+
+function makeCard(item) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<img class="card-img skeleton" src="${item.thumb}" alt="" loading="lazy"><div class="card-title">${item.title}</div><div class="card-meta">${item.brand || ''}</div>`;
+  card.querySelector('img').onload = e => e.target.classList.remove('skeleton');
+  card.onclick = () => openItem(item);
+  return card;
+}
+
+// ── Sort buttons ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadHome(btn.dataset.order);
+  };
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+let _searchTimer = null;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(_searchTimer);
+  const q = e.target.value.trim();
+  if (!q) { hideSug(); return; }
+  _searchTimer = setTimeout(() => fetchSug(q), 280);
+});
+document.getElementById('search').addEventListener('keydown', e => { if (e.key === 'Escape') hideSug(); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) hideSug(); });
+
+async function fetchSug(q) {
+  const res = await fetch(`${API}/api/hentai/search?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  const box = document.getElementById('suggestions');
+  if (!data.results.length) { box.style.display = 'none'; return; }
+  box.innerHTML = data.results.slice(0, 8).map((r, i) => `
+    <div class="sug-item" data-i="${i}">
+      <img class="sug-thumb" src="${r.thumb}" alt="" loading="lazy">
+      <div class="sug-info"><div class="sug-title">${r.title}</div><div class="sug-meta">${r.brand || ''}</div></div>
+    </div>`).join('');
+  box._results = data.results;
+  box.querySelectorAll('.sug-item').forEach(el => {
+    el.onclick = () => { hideSug(); document.getElementById('search').value = ''; openItem(box._results[+el.dataset.i]); };
+  });
+  box.style.display = 'block';
+}
+function hideSug() { document.getElementById('suggestions').style.display = 'none'; }
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+async function openItem(item) {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-brand').textContent = item.brand ? `by ${item.brand}` : '';
+  document.getElementById('modal-tags').innerHTML = (item.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('modal-synopsis').textContent = 'Loading…';
+  document.getElementById('modal-banner').src = item.thumb;
+  document.getElementById('player-wrap').classList.remove('open');
+  document.getElementById('modal-play').style.display = 'inline-flex';
+  destroyPlayer();
+
+  const res = await fetch(`${API}/api/hentai/video?id=${item.id}`);
+  const d = await res.json();
+
+  document.getElementById('modal-synopsis').textContent = d.synopsis || '';
+  document.getElementById('modal-tags').innerHTML = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+  document.getElementById('modal-play').onclick = () => playStream(d.stream);
+}
+
+function playStream(url) {
+  if (!url) { alert('Stream not available'); return; }
+  const wrap = document.getElementById('player-wrap');
+  wrap.classList.add('open');
+  document.getElementById('modal-play').style.display = 'none';
+  document.getElementById('player-loading').style.display = 'flex';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const video = document.getElementById('player');
+  destroyPlayer();
+
+  if (Hls.isSupported()) {
+    _hls = new Hls({
+      enableWorker: true,
+      startLevel: 99,
+      abrEwmaDefaultEstimate: 8000000,
+      capLevelToPlayerSize: false,
+    });
+    _hls.loadSource(url);
+    _hls.attachMedia(video);
+    _hls.on(Hls.Events.MANIFEST_PARSED, (_, d) => {
+      _hls.currentLevel = d.levels.length - 1;
+      document.getElementById('player-loading').style.display = 'none';
+      video.play();
+    });
+    _hls.on(Hls.Events.ERROR, (_, d) => {
+      if (d.fatal) document.getElementById('player-loading').textContent = 'Stream error';
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+    video.oncanplay = () => { document.getElementById('player-loading').style.display = 'none'; video.play(); };
+  }
+}
+
+function destroyPlayer() {
+  if (_hls) { _hls.destroy(); _hls = null; }
+  const v = document.getElementById('player');
+  v.pause();
+  v.src = '';
+}
+
+document.getElementById('modal-close').onclick = closeModal;
+document.getElementById('modal-overlay').onclick = e => { if (e.target === document.getElementById('modal-overlay')) closeModal(); };
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('player-wrap').classList.remove('open');
+  destroyPlayer();
+}
+
+loadHome();
+</script>
+</body>
+</html>
