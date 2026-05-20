@@ -1,44 +1,29 @@
-"""vidsrc streaming — extracts m3u8/mp4 from vidsrc.to embeds via Playwright."""
-from .playwright_extractor import extract_stream
-
-VIDSRC = "https://vidsrc.to/embed"
-VIDSRC2 = "https://vidsrc.me/embed"
-EMBED_SU = "https://embed.su/embed"
+"""Stream sources — embed URLs for iframe playback (no extraction needed)."""
 
 
-def _movie_urls(tmdb_id: int) -> list[tuple[str, str]]:
+def movie_sources(tmdb_id: int) -> list[dict]:
     return [
-        (f"{VIDSRC}/movie/{tmdb_id}", "vidsrc.to"),
-        (f"{VIDSRC2}/movie?tmdb={tmdb_id}", "vidsrc.me"),
-        (f"{EMBED_SU}/movie/{tmdb_id}", "embed.su"),
+        {"name": "vidsrc.to",  "url": f"https://vidsrc.to/embed/movie/{tmdb_id}"},
+        {"name": "vidsrc.cc",  "url": f"https://vidsrc.cc/v2/embed/movie/{tmdb_id}"},
+        {"name": "embed.su",   "url": f"https://embed.su/embed/movie/{tmdb_id}"},
+        {"name": "2embed",     "url": f"https://www.2embed.cc/embed/{tmdb_id}"},
     ]
 
 
-def _tv_urls(tmdb_id: int, season: int, episode: int) -> list[tuple[str, str]]:
+def tv_sources(tmdb_id: int, season: int, episode: int) -> list[dict]:
     return [
-        (f"{VIDSRC}/tv/{tmdb_id}/{season}/{episode}", "vidsrc.to"),
-        (f"{VIDSRC2}/tv?tmdb={tmdb_id}&season={season}&episode={episode}", "vidsrc.me"),
-        (f"{EMBED_SU}/tv/{tmdb_id}/{season}/{episode}", "embed.su"),
+        {"name": "vidsrc.to",  "url": f"https://vidsrc.to/embed/tv/{tmdb_id}/{season}/{episode}"},
+        {"name": "vidsrc.cc",  "url": f"https://vidsrc.cc/v2/embed/tv/{tmdb_id}?season={season}&episode={episode}"},
+        {"name": "embed.su",   "url": f"https://embed.su/embed/tv/{tmdb_id}/{season}/{episode}"},
+        {"name": "2embed",     "url": f"https://www.2embed.cc/embedtv/{tmdb_id}&s={season}&e={episode}"},
     ]
 
 
 async def get_movie_stream(tmdb_id: int) -> dict:
-    for url, name in _movie_urls(tmdb_id):
-        try:
-            stream = await extract_stream(url)
-            if stream:
-                return {"url": stream, "type": "hls" if ".m3u8" in stream else "mp4", "source": name}
-        except Exception:
-            continue
-    return {"error": "No stream found for this movie"}
+    srcs = movie_sources(tmdb_id)
+    return {"url": srcs[0]["url"], "type": "embed", "source": srcs[0]["name"], "sources": srcs}
 
 
 async def get_tv_stream(tmdb_id: int, season: int, episode: int) -> dict:
-    for url, name in _tv_urls(tmdb_id, season, episode):
-        try:
-            stream = await extract_stream(url)
-            if stream:
-                return {"url": stream, "type": "hls" if ".m3u8" in stream else "mp4", "source": name}
-        except Exception:
-            continue
-    return {"error": "No stream found for this episode"}
+    srcs = tv_sources(tmdb_id, season, episode)
+    return {"url": srcs[0]["url"], "type": "embed", "source": srcs[0]["name"], "sources": srcs}

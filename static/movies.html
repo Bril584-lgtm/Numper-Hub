@@ -102,6 +102,11 @@
   #player-wrap.open { display: block; }
   #player { width: 100%; height: 100%; border: none; }
   #player-loading { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; font-size: .9rem; color: var(--muted); }
+  #source-bar { display: none; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: .5rem; }
+  #source-bar.open { display: flex; }
+  .src-btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: .78rem; cursor: pointer; transition: all .15s; }
+  .src-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .src-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
   /* ── SPINNER / SKELETON ── */
   .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 3rem auto; }
@@ -149,7 +154,8 @@
       <div id="modal-synopsis"></div>
       <select id="season-select" style="display:none"></select>
       <div id="ep-grid"></div>
-      <div id="player-wrap"><iframe id="player" allowfullscreen></iframe><div id="player-loading">Loading stream…</div></div>
+      <div id="source-bar"></div>
+      <div id="player-wrap"><iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe><div id="player-loading">Loading stream…</div></div>
       <button class="btn btn-primary" id="modal-play" style="display:none">▶ Play Movie</button>
     </div>
   </div>
@@ -297,35 +303,52 @@ async function loadEpisodes(id, season) {
 }
 
 async function playTV(id, season, ep) {
-  showPlayer();
   const res = await fetch(`${API}/api/stream/tv?id=${id}&season=${season}&ep=${ep}`);
-  if (!res.ok) { document.getElementById('player-loading').textContent = 'Stream unavailable'; return; }
+  if (!res.ok) return;
   const data = await res.json();
+  showPlayer(data.sources || [{ name: data.source, url: data.url }]);
   loadPlayer(data.url);
 }
 
 document.getElementById('modal-play').onclick = async () => {
   if (!_currentItem) return;
-  showPlayer();
   const res = await fetch(`${API}/api/stream/movie?id=${_currentItem.id}`);
-  if (!res.ok) { document.getElementById('player-loading').textContent = 'Stream unavailable'; return; }
+  if (!res.ok) return;
   const data = await res.json();
+  showPlayer(data.sources || [{ name: data.source, url: data.url }]);
   loadPlayer(data.url);
 };
 
-function showPlayer() {
+function showPlayer(sources) {
   const wrap = document.getElementById('player-wrap');
   wrap.classList.add('open');
-  document.getElementById('player-loading').textContent = 'Loading stream…';
   document.getElementById('player-loading').style.display = 'flex';
+  document.getElementById('player-loading').textContent = 'Loading…';
   document.getElementById('player').src = '';
   wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const bar = document.getElementById('source-bar');
+  bar.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Source:</span>';
+  bar.classList.add('open');
+  sources.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'src-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = s.name;
+    btn.onclick = () => {
+      bar.querySelectorAll('.src-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadPlayer(s.url);
+    };
+    bar.appendChild(btn);
+  });
 }
 
 function loadPlayer(url) {
   const frame = document.getElementById('player');
+  const loading = document.getElementById('player-loading');
+  loading.style.display = 'flex';
+  loading.textContent = 'Loading…';
   frame.src = url;
-  frame.onload = () => { document.getElementById('player-loading').style.display = 'none'; };
+  frame.onload = () => { loading.style.display = 'none'; };
 }
 
 // ── Modal close ───────────────────────────────────────────────────────────────
@@ -335,6 +358,8 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('player').src = '';
   document.getElementById('player-wrap').classList.remove('open');
+  document.getElementById('source-bar').classList.remove('open');
+  document.getElementById('source-bar').innerHTML = '';
 }
 
 loadHome();
