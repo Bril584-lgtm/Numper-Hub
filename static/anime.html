@@ -763,7 +763,7 @@ async function loadBrowse() {
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Loading…</div>';
   $('browse-pagination').classList.remove('show');
   try {
-    const r = await fetch(`/api/browse?letter=${encodeURIComponent(_browseLetter)}&page=${_browsePage}&nsfw=${nsfwMode}&dub=${dubMode}`);
+    const r = await fetch(`/api/anime/browse?letter=${encodeURIComponent(_browseLetter)}&page=${_browsePage}&nsfw=${nsfwMode}&dub=${dubMode}`);
     const data = await r.json();
     grid.innerHTML = '';
     if (!data.results.length) {
@@ -834,7 +834,7 @@ document.addEventListener('click', e => {
 
 async function fetchSug(q) {
   try {
-    const r = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`);
+    const r = await fetch(`/api/anime/suggest?q=${encodeURIComponent(q)}`);
     const data = await r.json();
     showSug(data.results || []);
   } catch { hideSug(); }
@@ -1029,7 +1029,7 @@ async function openAnime(anime) {
   // For GogoAnime results, episode count may be 0 — fetch it
   let epCount = anime.episodes || 0;
   if (!epCount && anime.source === 'gogoanime') {
-    fetch(`/api/episodes?source=${encodeURIComponent(anime.source)}&id=${encodeURIComponent(anime.id)}`)
+    fetch(`/api/anime/episodes?source=${encodeURIComponent(anime.source)}&id=${encodeURIComponent(anime.id)}`)
       .then(r => r.json())
       .then(d => {
         if (d.count > 0) {
@@ -1071,7 +1071,7 @@ $('refresh-eps-btn').addEventListener('click', async () => {
   btn.classList.add('spinning');
   btn.disabled = true;
   try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(currentAnime.title)}&dub=${dubMode}&nsfw=${nsfwMode}`);
+    const res = await fetch(`/api/anime/search?q=${encodeURIComponent(currentAnime.title)}&dub=${dubMode}&nsfw=${nsfwMode}`);
     const data = await res.json();
     const match = (data.results || []).find(r => r.source === currentAnime.source) || (data.results || [])[0];
     if (match && match.episodes && match.episodes !== currentAnime.episodes) {
@@ -1388,7 +1388,7 @@ async function loadSourceSwitcher(anime, ep) {
   bar.innerHTML = '<span style="color:#555;font-size:.75rem;padding:2px 4px">Loading sources…</span>';
 
   try {
-    const res = await fetch(`/api/sources?source=${encodeURIComponent(anime.source)}&id=${encodeURIComponent(anime.id)}&ep=${ep}&dub=${dubMode}`);
+    const res = await fetch(`/api/anime/sources?source=${encodeURIComponent(anime.source)}&id=${encodeURIComponent(anime.id)}&ep=${ep}&dub=${dubMode}`);
     const data = await res.json();
     bar.innerHTML = '';
 
@@ -1419,7 +1419,7 @@ async function switchSource(btn, src) {
   hide($('error-msg'));
 
   try {
-    const res = await fetch(`/api/resolve?embed_url=${encodeURIComponent(src.url)}&name=${encodeURIComponent(src.name)}`);
+    const res = await fetch(`/api/anime/resolve?embed_url=${encodeURIComponent(src.url)}&name=${encodeURIComponent(src.name)}`);
     const data = await res.json();
     btn.classList.remove('loading');
     if (!res.ok || data.error || data.detail || !data.url) throw new Error(data.detail || data.error || 'No stream URL returned');
@@ -1449,7 +1449,7 @@ async function loadSkipTimes(malId, ep) {
   $('skip-recap-btn').style.display = 'none';
   if (!malId) return;
   try {
-    const res = await fetch(`/api/skiptimes?mal_id=${malId}&ep=${ep}`);
+    const res = await fetch(`/api/anime/skiptimes?mal_id=${malId}&ep=${ep}`);
     const data = await res.json();
     if (!data.found) return;
     for (const item of data.results || []) {
@@ -1466,7 +1466,7 @@ async function autoLoadSubtitles(title, ep) {
   // Skip if user already loaded a manual subtitle file
   if (ccTrack.src && ccTrack.src.startsWith('blob:')) return;
   try {
-    const res = await fetch(`/api/subtitles?title=${encodeURIComponent(title)}&ep=${ep}`);
+    const res = await fetch(`/api/anime/subtitles?title=${encodeURIComponent(title)}&ep=${ep}`);
     const data = await res.json();
     const subs = data.subtitles || [];
     if (!subs.length) return;
@@ -1788,7 +1788,7 @@ async function loadHomepage() {
 async function openFromTitle(title) {
   const loader = showSearchLoading(`Loading ${title}…`);
   try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(title)}&dub=${dubMode}&nsfw=${nsfwMode}`);
+    const res = await fetch(`/api/anime/search?q=${encodeURIComponent(title)}&dub=${dubMode}&nsfw=${nsfwMode}`);
     const data = await res.json();
     loader.done();
     const results = data.results || [];
