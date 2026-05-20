@@ -8,7 +8,14 @@ AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Fire
 
 
 def _headers():
-    return {"User-Agent": AGENT, "Authorization": f"Bearer {TMDB_API_KEY}"}
+    return {"User-Agent": AGENT}
+
+
+def _params(extra: dict | None = None) -> dict:
+    p = {"api_key": TMDB_API_KEY}
+    if extra:
+        p.update(extra)
+    return p
 
 
 def _img(path: str, size: str = "w500") -> str:
@@ -95,7 +102,7 @@ async def fetch_spanish_home() -> dict:
 
 async def search(query: str, language: str = "en-US") -> list[dict]:
     async with httpx.AsyncClient(headers=_headers(), timeout=10) as c:
-        r = await c.get(f"{BASE}/search/multi", params={"query": query, "language": language, "page": 1})
+        r = await c.get(f"{BASE}/search/multi", params=_params({"query": query, "language": language, "page": 1}))
     results = []
     for item in (r.json().get("results") or []):
         mt = item.get("media_type", "movie")
@@ -107,7 +114,7 @@ async def search(query: str, language: str = "en-US") -> list[dict]:
 
 async def search_spanish(query: str) -> list[dict]:
     async with httpx.AsyncClient(headers=_headers(), timeout=10) as c:
-        r = await c.get(f"{BASE}/search/multi", params={"query": query, "language": "es-MX", "page": 1})
+        r = await c.get(f"{BASE}/search/multi", params=_params({"query": query, "language": "es-MX", "page": 1}))
     results = []
     for item in (r.json().get("results") or []):
         mt = item.get("media_type", "movie")
@@ -125,7 +132,7 @@ async def search_spanish(query: str) -> list[dict]:
 async def get_details(tmdb_id: int, media_type: str, language: str = "en-US") -> dict:
     path = "tv" if media_type == "tv" else "movie"
     async with httpx.AsyncClient(headers=_headers(), timeout=10) as c:
-        r = await c.get(f"{BASE}/{path}/{tmdb_id}", params={"language": language})
+        r = await c.get(f"{BASE}/{path}/{tmdb_id}", params=_params({"language": language}))
     d = r.json()
     card = _card(d, media_type)
     if media_type == "tv":
@@ -146,7 +153,7 @@ async def get_details(tmdb_id: int, media_type: str, language: str = "en-US") ->
 
 async def get_season_episodes(tmdb_id: int, season: int) -> list[dict]:
     async with httpx.AsyncClient(headers=_headers(), timeout=10) as c:
-        r = await c.get(f"{BASE}/tv/{tmdb_id}/season/{season}")
+        r = await c.get(f"{BASE}/tv/{tmdb_id}/season/{season}", params=_params())
     eps = []
     for e in (r.json().get("episodes") or []):
         eps.append({
@@ -164,7 +171,8 @@ async def _gather(c: httpx.AsyncClient, paths: list[str]) -> list[dict]:
     import asyncio
     async def _get(path):
         try:
-            r = await c.get(f"{BASE}{path}")
+            sep = "&" if "?" in path else "?"
+            r = await c.get(f"{BASE}{path}{sep}api_key={TMDB_API_KEY}")
             return r.json()
         except Exception:
             return {}
