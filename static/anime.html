@@ -1471,14 +1471,11 @@ async function autoLoadSubtitles(title, ep) {
     const subs = data.subtitles || [];
     if (!subs.length) return;
 
-    // Prefer English srt/vtt, fall back to first available
-    const pick = subs.find(s => /eng|en[._-]/i.test(s.name)) || subs[0];
+    const pick = subs[0];
+    if (!pick.content) return;
 
-    // Fetch the subtitle file through our proxy to avoid CORS
-    const subRes = await fetch(`/api/proxy?url=${encodeURIComponent(pick.url)}`);
-    let text = await subRes.text();
+    let text = pick.content;
     if (pick.name.endsWith('.srt')) text = srtToVtt(text);
-    if (pick.name.endsWith('.ass') || pick.name.endsWith('.ssa')) return; // ASS not supported natively
 
     const blob = new Blob([text], { type: 'text/vtt' });
     const oldUrl = ccTrack.src;

@@ -55,7 +55,7 @@ The launcher will prompt you for these on first run and save them to `.env` auto
 | Key | Used for | Where to get it |
 |---|---|---|
 | TMDB API key | Movies & Spanish metadata | https://www.themoviedb.org/settings/api |
-| Jimaku token | Anime auto-subtitles | https://jimaku.cc/settings |
+| SubDL API key | Anime auto-subtitles | https://subdl.com |
 
 Both are free. Both are optional — the relevant sections just won't work without them. You can still load subtitle files manually via the CC button in the player.
 

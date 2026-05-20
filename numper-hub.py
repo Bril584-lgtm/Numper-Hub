@@ -97,28 +97,28 @@ def _create_shortcut():
         print(f"Couldn't create shortcut: {e}\n")
 
 
-def _prompt_jimaku_token():
-    if os.environ.get("JIMAKU_TOKEN"):
+def _prompt_subdl_key():
+    if os.environ.get("SUBDL_API_KEY"):
         return
-    print("Anime subtitles use Jimaku.cc — get a free token at: https://jimaku.cc/settings")
+    print("Anime subtitles use SubDL — get a free API key at: https://subdl.com")
     print("(Press Enter to skip — subtitles won't auto-load but you can still load files manually)")
     print()
-    token = input("Paste your Jimaku token (or press Enter to skip): ").strip()
-    if not token:
+    key = input("Paste your SubDL API key (or press Enter to skip): ").strip()
+    if not key:
         print()
         return
-    os.environ["JIMAKU_TOKEN"] = token
+    os.environ["SUBDL_API_KEY"] = key
     existing = ENV_FILE.read_text() if ENV_FILE.exists() else ""
-    if "JIMAKU_TOKEN=" in existing:
+    if "SUBDL_API_KEY=" in existing:
         lines = [
-            f"JIMAKU_TOKEN={token}" if l.startswith("JIMAKU_TOKEN=") else l
+            f"SUBDL_API_KEY={key}" if l.startswith("SUBDL_API_KEY=") else l
             for l in existing.splitlines()
         ]
         ENV_FILE.write_text("\n".join(lines) + "\n")
     else:
         with open(ENV_FILE, "a") as f:
-            f.write(f"JIMAKU_TOKEN={token}\n")
-    print("Token saved to .env\n")
+            f.write(f"SUBDL_API_KEY={key}\n")
+    print("Key saved to .env\n")
 
 
 def _maybe_offer_shortcut():
@@ -132,7 +132,7 @@ def _maybe_offer_shortcut():
 def main():
     _load_env()
     _prompt_tmdb_key()
-    _prompt_jimaku_token()
+    _prompt_subdl_key()
     _maybe_offer_shortcut()
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "server:app", "--host", "127.0.0.1", "--port", str(PORT)],
