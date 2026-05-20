@@ -100,10 +100,13 @@ def _create_shortcut():
 def _prompt_subdl_key():
     if os.environ.get("SUBDL_API_KEY"):
         return
-    print("Anime subtitles use SubDL — get a free API key at: https://subdl.com")
-    print("(Press Enter to skip — subtitles won't auto-load but you can still load files manually)")
+    ans = input("Set up anime subtitles? [y/n]: ").strip().lower()
+    if ans != "y":
+        print()
+        return
+    print("Get a free API key at: https://subdl.com")
     print()
-    key = input("Paste your SubDL API key (or press Enter to skip): ").strip()
+    key = input("Paste your SubDL API key: ").strip()
     if not key:
         print()
         return
