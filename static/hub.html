@@ -17,6 +17,7 @@
     --amber: #f5a623;
     --amber-dark: #c07d0a;
     --purple: #7c3aed;
+    --pink: #e91e8c;
   }
   body {
     background: var(--bg);
@@ -134,6 +135,15 @@
   .card-anime:hover::before { opacity: 1; }
   .card-anime .card-title { color: var(--purple); }
   .card-anime .card-cta { background: var(--purple); color: #fff; }
+  .card-hentai {
+    background: linear-gradient(160deg, #1a0010 0%, #110008 100%);
+    border-color: #3a0020;
+  }
+  .card-hentai::before { background: radial-gradient(circle at 60% 0%, rgba(233,30,140,.15), transparent 60%); }
+  .card-hentai:hover { box-shadow: 0 12px 40px rgba(233,30,140,.35); border-color: var(--pink); }
+  .card-hentai:hover::before { opacity: 1; }
+  .card-hentai .card-title { color: var(--pink); }
+  .card-hentai .card-cta { background: var(--pink); color: #fff; }
   .card:hover .card-cta { filter: brightness(1.15); }
   footer {
     color: var(--muted);
@@ -168,6 +178,13 @@
     <div class="card-title">Anime</div>
     <div class="card-desc">Stream thousands of anime series and films — subbed and dubbed, ad-free.</div>
     <button class="card-cta">Watch</button>
+  </a>
+
+  <a class="card card-hentai" href="https://hanime.tv" target="_blank">
+    <div class="card-icon">🔞</div>
+    <div class="card-title">Hentai</div>
+    <div class="card-desc">Adult anime content. 18+ only.</div>
+    <button class="card-cta">Enter</button>
   </a>
 </div>
 
