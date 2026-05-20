@@ -4,6 +4,12 @@ A local web app for browsing and watching Anime, Movies, TV shows, Spanish conte
 
 ---
 
+## Anime only?
+
+If you just want the anime section as a standalone app, check out **[Numper Ani](https://github.com/Bril584-lgtm/Numper-Ani)** — no API key required.
+
+---
+
 ## ⚠️ Disclaimer
 
 - This project is intended for **personal, educational use only**.
