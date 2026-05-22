@@ -541,13 +541,15 @@ async def proxy(url: str = Query(...), ref: str = Query(default=""), request: Re
         except Exception:
             pass
 
-    if ref:
+    # Embedded headers (baked into the CDN URL by the embed service) take priority —
+    # they reflect what the CDN actually validates, not the page-level browser referer.
+    if embedded.get("referer"):
+        use_referer = embedded["referer"]
+        use_origin = embedded.get("origin", cdn_origin)
+    elif ref:
         ref_parsed = urllib.parse.urlparse(ref)
         use_referer = ref
         use_origin = f"{ref_parsed.scheme}://{ref_parsed.netloc}"
-    elif embedded.get("referer"):
-        use_referer = embedded["referer"]
-        use_origin = embedded.get("origin", cdn_origin)
     else:
         use_referer = cdn_origin + "/"
         use_origin = cdn_origin
@@ -584,7 +586,11 @@ async def proxy(url: str = Query(...), ref: str = Query(default=""), request: Re
         if h in r.headers:
             resp_headers[h] = r.headers[h]
     if ".m3u8" in url or "mpegurl" in ctype.lower():
-        rewritten = _rewrite_m3u8(r.text, rewrite_url, explicit_ref=ref)
+        if r.status_code >= 400:
+            return Response(status_code=r.status_code, content=b"", headers=resp_headers)
+        # Pass embedded referer so child segment/playlist URLs use the correct ref
+        effective_ref = embedded.get("referer") or ref
+        rewritten = _rewrite_m3u8(r.text, rewrite_url, explicit_ref=effective_ref)
         resp_headers["Cache-Control"] = "no-cache"
         return Response(content=rewritten, media_type="application/vnd.apple.mpegurl", headers=resp_headers)
     return Response(content=r.content, status_code=r.status_code, media_type=ctype, headers=resp_headers)
