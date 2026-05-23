@@ -75,16 +75,19 @@ async def get_song(song_id: str) -> dict:
 
 # ── Home ──────────────────────────────────────────────────────────────────────
 
+# Only show these languages on the front page (search is unrestricted)
+_HOME_LANGUAGES = {"english", "spanish"}
+
 _ROWS = [
-    ("🔥 Trending Now",    "top hits 2025"),
-    ("🎵 Pop",             "pop songs 2025"),
-    ("🎤 Hip-Hop",         "hip hop rap 2025"),
-    ("💿 R&B",             "rnb soul 2025"),
-    ("🎸 Rock",            "rock hits 2025"),
-    ("🌙 Chill / Lo-fi",   "chill lofi 2025"),
-    ("💃 Latin",           "latin reggaeton 2025"),
-    ("🎹 Electronic",      "edm electronic 2025"),
-    ("🎬 Movie Hits",      "movie soundtrack hits 2025"),
+    ("🔥 Trending Now",    "top english hits 2025"),
+    ("🎵 Pop",             "english pop songs 2025"),
+    ("🎤 Hip-Hop",         "hip hop rap english 2025"),
+    ("💿 R&B",             "rnb soul english 2025"),
+    ("🎸 Rock",            "rock hits english 2025"),
+    ("🌙 Chill / Lo-fi",   "chill lofi english 2025"),
+    ("💃 Latin",           "latin reggaeton spanish 2025"),
+    ("🎹 Electronic",      "edm electronic english 2025"),
+    ("🎬 Movie Hits",      "english movie soundtrack hits 2025"),
 ]
 
 
@@ -92,10 +95,14 @@ async def get_home() -> dict:
     async with httpx.AsyncClient(headers=HEADERS, timeout=20) as c:
         async def _row(label: str, query: str) -> dict:
             try:
-                r = await c.get(f"{BASE}/search/songs", params={"query": query, "limit": 20})
+                # Fetch extra so we still have 20 after filtering
+                r = await c.get(f"{BASE}/search/songs", params={"query": query, "limit": 50})
                 songs = (r.json().get("data") or {}).get("results") or []
-                items = [_card(s) for s in songs if s.get("id")]
-                return {"label": label, "items": items}
+                items = [
+                    _card(s) for s in songs
+                    if s.get("id") and s.get("language", "").lower() in _HOME_LANGUAGES
+                ]
+                return {"label": label, "items": items[:20]}
             except Exception:
                 return {"label": label, "items": []}
 
