@@ -1,8 +1,8 @@
-"""Music streaming via JioSaavn unofficial API (saavn.dev) — full tracks, no key needed."""
+"""Music streaming via JioSaavn unofficial API — full tracks, no key needed."""
 import asyncio
 import httpx
 
-BASE = "https://saavn.dev/api"
+BASE = "https://jiosavan-api2.vercel.app/api"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
     "Accept": "application/json",
@@ -67,7 +67,7 @@ async def search(query: str, limit: int = 20) -> list[dict]:
 
 async def get_song(song_id: str) -> dict:
     async with httpx.AsyncClient(headers=HEADERS, timeout=15) as c:
-        r = await c.get(f"{BASE}/songs/{song_id}")
+        r = await c.get(f"{BASE}/songs", params={"ids": song_id})
     data = r.json()
     songs = data.get("data") or []
     return _card(songs[0]) if songs else {}
