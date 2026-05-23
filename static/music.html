@@ -159,6 +159,17 @@
   #volume-fill { height: 100%; background: var(--muted); border-radius: 2px; width: 80%; pointer-events: none; }
   #volume-bar:hover #volume-fill { background: var(--accent); }
 
+  /* ── BACK BUTTON / VIEW HEADER ── */
+  .view-header { display: flex; align-items: center; gap: .8rem; padding: 1rem 1.4rem .4rem; }
+  .back-btn {
+    background: var(--surface3); border: none; color: var(--text);
+    font-size: .85rem; font-weight: 600; padding: .4rem .9rem;
+    border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: .35rem;
+    transition: background .15s, transform .1s; flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--surface3); filter: brightness(1.3); transform: translateX(-2px); }
+  .view-header h2 { font-size: 1.1rem; font-weight: 700; }
+
   /* ── LOADING / SKELETON ── */
   .skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
   @keyframes shimmer { to { background-position: -200% 0; } }
@@ -212,12 +223,18 @@
 
   <!-- search view -->
   <div id="search-view">
-    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;" id="search-heading">Results</h2>
+    <div class="view-header">
+      <button class="back-btn" onclick="showHome()">&#8592; Back</button>
+      <h2 id="search-heading">Results</h2>
+    </div>
     <div id="search-results"></div>
   </div>
 
   <!-- artist view -->
   <div id="artist-view">
+    <div class="view-header">
+      <button class="back-btn" id="artist-back">&#8592; Back</button>
+    </div>
     <div id="artist-hero">
       <img id="artist-avatar" src="" alt="">
       <div>
@@ -523,10 +540,16 @@ function showHome() {
 // ── Artist page ───────────────────────────────────────────────────────────────
 async function openArtist(artistName, seedThumb) {
   const name = artistName.split(',')[0].trim();
+  // Remember what was open before so back button can return there
+  const wasSearch = document.getElementById('search-view').classList.contains('open');
   document.getElementById('home-view').style.display = 'none';
   document.getElementById('search-view').classList.remove('open');
   const av = document.getElementById('artist-view');
   av.classList.add('open');
+  // Back → previous view (search or home)
+  document.getElementById('artist-back').onclick = wasSearch
+    ? () => { av.classList.remove('open'); document.getElementById('search-view').classList.add('open'); }
+    : () => showHome();
   // Header
   document.getElementById('artist-name').textContent = name;
   document.getElementById('artist-avatar').src = seedThumb || '';
