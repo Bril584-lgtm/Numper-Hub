@@ -242,9 +242,10 @@ const API = '';
 let _trending = [], _heroIdx = 0, _heroTimer = null;
 let _queue = [], _queueIdx = -1;
 let _shuffle = false, _repeat = false;
+let _loadingRecs = false;
 const audio = document.getElementById('audio');
 
-// ── Drag scroll ─────────────────────────────────────────────────────────────
+// ── Drag scroll ──────────────────────────────────────────────────────────────
 function _addDragScroll(track) {
   let dragging = false, startX = 0, startScroll = 0;
   track.addEventListener('mousedown', e => {
@@ -258,7 +259,7 @@ function _addDragScroll(track) {
   track.style.cursor = 'grab';
 }
 
-// ── Rows ────────────────────────────────────────────────────────────────────
+// ── Rows ─────────────────────────────────────────────────────────────────────
 function renderRows(rows) {
   const container = document.getElementById('rows');
   container.innerHTML = '';
@@ -274,7 +275,8 @@ function renderRows(rows) {
         <button class="row-arrow row-right" data-dir="1">&#8250;</button>
       </div>`;
     const scroll = div.querySelector('.row-scroll');
-    row.items.forEach(item => scroll.appendChild(makeCard(item)));
+    // Pass the full row items so Next/Prev works across the whole row
+    row.items.forEach((item, idx) => scroll.appendChild(makeCard(item, row.items, idx)));
     div.querySelectorAll('.row-arrow').forEach(btn => {
       btn.addEventListener('click', () => scroll.scrollBy({ left: parseInt(btn.dataset.dir) * scroll.clientWidth * 0.85, behavior: 'smooth' }));
     });
@@ -283,7 +285,8 @@ function renderRows(rows) {
   });
 }
 
-function makeCard(item) {
+// makeCard: rowItems + idx let Next/Prev navigate through the full row
+function makeCard(item, rowItems, idx) {
   const div = document.createElement('div');
   div.className = 'music-card';
   div.innerHTML = `
@@ -294,12 +297,16 @@ function makeCard(item) {
     <div class="card-title">${item.title}</div>
     <div class="card-artist">${item.artist || ''}</div>`;
   div.querySelector('img').onload = e => e.target.classList.remove('skeleton');
-  div.querySelector('.card-play-btn').addEventListener('click', e => { e.stopPropagation(); playNow(item); });
-  div.addEventListener('click', () => playNow(item));
+  const play = () => {
+    if (rowItems && rowItems.length > 1) playFromList(rowItems, idx);
+    else playNow(item);
+  };
+  div.querySelector('.card-play-btn').addEventListener('click', e => { e.stopPropagation(); play(); });
+  div.addEventListener('click', play);
   return div;
 }
 
-// ── Hero ────────────────────────────────────────────────────────────────────
+// ── Hero ─────────────────────────────────────────────────────────────────────
 function renderHero() {
   if (!_trending.length) return;
   const item = _trending[_heroIdx];
@@ -318,12 +325,16 @@ function renderHero() {
   clearInterval(_heroTimer);
   _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % Math.min(_trending.length, 8); renderHero(); }, 7000);
 }
-function resetHeroTimer() { clearInterval(_heroTimer); _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % Math.min(_trending.length, 8); renderHero(); }, 7000); }
-document.getElementById('hero-play').onclick = () => _trending[_heroIdx] && playNow(_trending[_heroIdx]);
-document.getElementById('hero-queue').onclick = () => _trending[_heroIdx] && addToQueue(_trending[_heroIdx]);
+function resetHeroTimer() {
+  clearInterval(_heroTimer);
+  _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % Math.min(_trending.length, 8); renderHero(); }, 7000);
+}
+// Hero buttons play the full trending list
+document.getElementById('hero-play').onclick = () => { if (_trending.length) playFromList(_trending, _heroIdx); };
+document.getElementById('hero-queue').onclick = () => { if (_trending[_heroIdx]) addToQueue(_trending[_heroIdx]); };
 
-// ── Search ──────────────────────────────────────────────────────────────────
-let _searchTimer = null;
+// ── Search ───────────────────────────────────────────────────────────────────
+let _searchTimer = null, _lastQuery = '';
 document.getElementById('search').addEventListener('input', e => {
   clearTimeout(_searchTimer);
   const q = e.target.value.trim();
@@ -331,82 +342,193 @@ document.getElementById('search').addEventListener('input', e => {
   _searchTimer = setTimeout(() => fetchSug(q), 280);
 });
 document.getElementById('search').addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideSug(); }
+  if (e.key === 'Escape') { hideSug(); document.getElementById('search').value = ''; showHome(); }
   if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) { hideSug(); fullSearch(q); } }
 });
 document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) hideSug(); });
 
 async function fetchSug(q) {
-  const res = await fetch(`${API}/api/music/suggest?q=${encodeURIComponent(q)}`);
-  const data = await res.json();
-  const box = document.getElementById('suggestions');
-  if (!data.results?.length) { box.style.display = 'none'; return; }
-  box.innerHTML = data.results.map((r, i) => `
-    <div class="sug-item" data-i="${i}">
-      <img class="sug-thumb" src="${r.thumb || ''}" alt="" loading="lazy">
-      <div class="sug-info"><div class="sug-title">${r.title}</div><div class="sug-artist">${r.artist || ''}</div></div>
-    </div>`).join('');
-  box._results = data.results;
-  box.querySelectorAll('.sug-item').forEach(el => {
-    el.onclick = () => { hideSug(); document.getElementById('search').value = ''; playNow(box._results[+el.dataset.i]); showHome(); };
-  });
-  box.style.display = 'block';
+  try {
+    const res = await fetch(`${API}/api/music/suggest?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const box = document.getElementById('suggestions');
+    if (!data.results?.length) { box.style.display = 'none'; return; }
+    box.innerHTML = data.results.map((r, i) => `
+      <div class="sug-item" data-i="${i}">
+        <img class="sug-thumb" src="${r.thumb || ''}" alt="" loading="lazy">
+        <div class="sug-info"><div class="sug-title">${r.title}</div><div class="sug-artist">${r.artist || ''}</div></div>
+      </div>`).join('');
+    box._results = data.results;
+    box.querySelectorAll('.sug-item').forEach(el => {
+      el.onclick = () => {
+        hideSug();
+        const picked = box._results[+el.dataset.i];
+        // Full search for the picked song's title so the queue has context
+        document.getElementById('search').value = picked.title;
+        fullSearch(picked.title, picked.id);
+      };
+    });
+    box.style.display = 'block';
+  } catch(e) {}
 }
 function hideSug() { document.getElementById('suggestions').style.display = 'none'; }
 
-async function fullSearch(q) {
+// fullSearch: q = query, autoPlayId = song id to auto-play from results
+async function fullSearch(q, autoPlayId) {
+  _lastQuery = q;
   document.getElementById('home-view').style.display = 'none';
   const sv = document.getElementById('search-view');
   sv.classList.add('open');
   document.getElementById('search-heading').textContent = `Results for "${q}"`;
   const grid = document.getElementById('search-results');
   grid.innerHTML = '<div style="color:var(--muted);padding:20px">Searching…</div>';
-  const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(q)}`);
-  const data = await res.json();
-  const results = data.results || [];
-  if (!results.length) { grid.innerHTML = '<div style="color:var(--muted);padding:20px">No results found.</div>'; return; }
-  grid.innerHTML = '';
-  results.forEach((item, i) => {
-    const row = document.createElement('div');
-    row.className = 'result-row';
-    row.innerHTML = `
-      <div class="result-num">${i + 1}</div>
-      <img class="result-art" src="${item.thumb || ''}" alt="" loading="lazy">
-      <div class="result-info">
-        <div class="result-title">${item.title}</div>
-        <div class="result-artist">${item.artist || ''}</div>
-      </div>
-      <div class="result-dur">${fmtTime(item.duration)}</div>`;
-    row.addEventListener('click', () => { playNow(item); highlightResult(i); });
-    grid.appendChild(row);
-  });
+
+  // Remove old recs section if any
+  const oldRecs = document.getElementById('recs-section');
+  if (oldRecs) oldRecs.remove();
+
+  try {
+    const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const results = data.results || [];
+    if (!results.length) { grid.innerHTML = '<div style="color:var(--muted);padding:20px">No results found.</div>'; return; }
+    grid.innerHTML = '';
+    results.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.dataset.idx = i;
+      row.innerHTML = `
+        <div class="result-num">${i + 1}</div>
+        <img class="result-art" src="${item.thumb || ''}" alt="" loading="lazy">
+        <div class="result-info">
+          <div class="result-title">${item.title}</div>
+          <div class="result-artist">${item.artist || ''}</div>
+        </div>
+        <div class="result-dur">${fmtTime(item.duration)}</div>`;
+      // Clicking a result queues ALL results, starts from that index
+      row.addEventListener('click', () => { playFromList(results, i); highlightResult(i); });
+      grid.appendChild(row);
+    });
+
+    // If called from a suggestion, auto-play that song
+    if (autoPlayId) {
+      const idx = results.findIndex(r => r.id === autoPlayId);
+      const startIdx = idx >= 0 ? idx : 0;
+      playFromList(results, startIdx);
+      highlightResult(startIdx);
+    }
+
+    // Load "More like this" recommendations below results
+    loadRecsSection(results[0]);
+  } catch(e) {
+    grid.innerHTML = '<div style="color:var(--muted);padding:20px">Search failed. Try again.</div>';
+  }
 }
+
+// Renders a "More like this" row below search results
+async function loadRecsSection(seedItem) {
+  if (!seedItem) return;
+  const sv = document.getElementById('search-view');
+  const section = document.createElement('div');
+  section.id = 'recs-section';
+  section.style.cssText = 'margin-top:2rem;';
+  section.innerHTML = `<h3 style="font-size:.95rem;font-weight:700;margin-bottom:.8rem;padding:0 .2rem;">More like this</h3><div id="recs-grid" style="color:var(--muted);font-size:.85rem;padding:.4rem .2rem;">Loading…</div>`;
+  sv.appendChild(section);
+
+  try {
+    // Search by artist name for related songs
+    const artistQ = seedItem.artist ? seedItem.artist.split(',')[0].trim() : seedItem.title;
+    const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(artistQ)}`);
+    const data = await res.json();
+    const recs = (data.results || []).filter(r => r.id !== seedItem.id).slice(0, 20);
+    const grid = document.getElementById('recs-grid');
+    if (!recs.length) { grid.textContent = 'No recommendations found.'; return; }
+    grid.innerHTML = '';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;';
+    recs.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.innerHTML = `
+        <div class="result-num">${i + 1}</div>
+        <img class="result-art" src="${item.thumb || ''}" alt="" loading="lazy">
+        <div class="result-info">
+          <div class="result-title">${item.title}</div>
+          <div class="result-artist">${item.artist || ''}</div>
+        </div>
+        <div class="result-dur">${fmtTime(item.duration)}</div>`;
+      row.addEventListener('click', () => playFromList(recs, i));
+      grid.appendChild(row);
+    });
+  } catch(e) {
+    const g = document.getElementById('recs-grid');
+    if (g) g.textContent = '';
+  }
+}
+
 function highlightResult(idx) {
-  document.querySelectorAll('.result-row').forEach((r, i) => {
+  document.querySelectorAll('#search-results .result-row').forEach((r, i) => {
     const numEl = r.querySelector('.result-num');
     if (i === idx) numEl.innerHTML = '<div class="now-playing-dot"></div>';
     else numEl.textContent = i + 1;
   });
 }
+
 function showHome() {
   document.getElementById('home-view').style.display = '';
   document.getElementById('search-view').classList.remove('open');
+  document.getElementById('search').value = '';
+  _lastQuery = '';
 }
 
-// ── Playback ─────────────────────────────────────────────────────────────────
+// ── Playback ──────────────────────────────────────────────────────────────────
+
+// Play from a list (row / search results) — Next/Prev navigates the list
+function playFromList(items, idx) {
+  _queue = [...items];
+  _queueIdx = idx;
+  loadAndPlay(_queue[_queueIdx]);
+  updateQueueLabel();
+}
+
+// Play a single item and load recommendations around it
 async function playNow(item) {
   _queue = [item];
   _queueIdx = 0;
-  await loadAndPlay(item);
+  loadAndPlay(item);
+  updateQueueLabel();
+  // Fetch recommendations in background and append to queue
+  appendRecommended(item);
 }
 
 function addToQueue(item) {
   _queue.push(item);
   if (_queueIdx === -1) { _queueIdx = 0; loadAndPlay(_queue[0]); }
+  updateQueueLabel();
+}
+
+// Fetch artist-based recommendations and append to queue (background)
+async function appendRecommended(seedItem) {
+  if (_loadingRecs) return;
+  _loadingRecs = true;
+  try {
+    const artistQ = seedItem.artist ? seedItem.artist.split(',')[0].trim() : seedItem.title;
+    const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(artistQ)}`);
+    const data = await res.json();
+    const recs = (data.results || []).filter(r => r.id !== seedItem.id);
+    // Only append if queue hasn't grown already
+    if (_queue.length <= 2) _queue.push(...recs);
+  } catch(e) {}
+  _loadingRecs = false;
+}
+
+function updateQueueLabel() {
+  const total = _queue.length;
+  const pos = _queueIdx + 1;
+  const el = document.getElementById('bar-artist');
+  // The artist text will be overwritten by loadAndPlay; this is a no-op hook for future use
 }
 
 async function loadAndPlay(item) {
-  // Update bar UI immediately with what we know
   document.getElementById('bar-art').src = item.thumb || '';
   document.getElementById('bar-title').textContent = item.title;
   document.getElementById('bar-artist').textContent = item.artist || '';
@@ -414,15 +536,12 @@ async function loadAndPlay(item) {
   document.getElementById('play-pause').textContent = '⏸';
 
   let url = item.url;
-
-  // If no URL in card data, fetch from API
   if (!url) {
     try {
       const res = await fetch(`${API}/api/music/song?id=${encodeURIComponent(item.id)}`);
       if (!res.ok) throw new Error('not found');
       const d = await res.json();
       url = d.url;
-      // update bar with full data
       if (d.thumb) document.getElementById('bar-art').src = d.thumb;
       if (d.artist) document.getElementById('bar-artist').textContent = d.artist;
     } catch(e) {
@@ -461,8 +580,20 @@ audio.addEventListener('ended', () => {
   const next = _shuffle
     ? Math.floor(Math.random() * _queue.length)
     : _queueIdx + 1;
-  if (next < _queue.length) { _queueIdx = next; loadAndPlay(_queue[_queueIdx]); }
-  else { document.getElementById('play-pause').textContent = '▶'; }
+  if (next < _queue.length) {
+    _queueIdx = next;
+    loadAndPlay(_queue[_queueIdx]);
+    // highlight if still in search view
+    if (document.getElementById('search-view').classList.contains('open')) highlightResult(_queueIdx);
+  } else {
+    // Queue exhausted — fetch more recommendations from current song
+    const current = _queue[_queueIdx];
+    if (current) appendRecommended(current).then(() => {
+      if (_queue.length > _queueIdx + 1) { _queueIdx++; loadAndPlay(_queue[_queueIdx]); }
+      else document.getElementById('play-pause').textContent = '▶';
+    });
+    else document.getElementById('play-pause').textContent = '▶';
+  }
 });
 audio.addEventListener('waiting', () => { document.getElementById('bar-loading').classList.add('show'); });
 audio.addEventListener('playing', () => { document.getElementById('bar-loading').classList.remove('show'); });
@@ -524,14 +655,14 @@ document.addEventListener('keydown', e => {
   if (e.code === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 10);
 });
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTime(s) {
   if (!s || isNaN(s)) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 async function loadHome() {
   const res = await fetch(`${API}/api/music/home`);
   const data = await res.json();
