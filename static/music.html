@@ -98,7 +98,20 @@
   }
   .music-card:hover .card-play-btn { opacity: 1; transform: translateY(0); }
   .card-title { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .2rem; }
-  .card-artist { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-artist { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .card-artist:hover { color: var(--text); text-decoration: underline; }
+  .result-artist { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .result-artist:hover { color: var(--text); text-decoration: underline; }
+  #bar-artist { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  #bar-artist:hover { color: var(--text); text-decoration: underline; }
+  /* Artist view */
+  #artist-view { display: none; padding: 0 0 2rem; }
+  #artist-view.open { display: block; }
+  #artist-hero { background: linear-gradient(to bottom, var(--surface3), var(--bg)); padding: 2rem 1.4rem 1.2rem; display: flex; align-items: flex-end; gap: 1.2rem; margin-bottom: .5rem; }
+  #artist-avatar { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; background: var(--surface3); flex-shrink: 0; box-shadow: 0 6px 24px rgba(0,0,0,.6); }
+  #artist-name { font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+  #artist-meta { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+  #artist-play-all { margin-top: .8rem; }
 
   /* ── SEARCH RESULTS ── */
   #search-view { display: none; padding: 1.5rem 1.4rem; }
@@ -202,6 +215,23 @@
     <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;" id="search-heading">Results</h2>
     <div id="search-results"></div>
   </div>
+
+  <!-- artist view -->
+  <div id="artist-view">
+    <div id="artist-hero">
+      <img id="artist-avatar" src="" alt="">
+      <div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem;">Artist</div>
+        <div id="artist-name">—</div>
+        <div id="artist-meta"></div>
+        <button class="btn btn-primary" id="artist-play-all" style="margin-top:.7rem;">▶ Play All</button>
+      </div>
+    </div>
+    <div style="padding:0 1.4rem;">
+      <h3 style="font-size:.95rem;font-weight:700;margin-bottom:.7rem;">Songs</h3>
+      <div id="artist-tracks"></div>
+    </div>
+  </div>
 </div>
 
 <!-- bottom player bar -->
@@ -275,8 +305,7 @@ function renderRows(rows) {
         <button class="row-arrow row-right" data-dir="1">&#8250;</button>
       </div>`;
     const scroll = div.querySelector('.row-scroll');
-    // Pass the full row items so Next/Prev works across the whole row
-    row.items.forEach((item, idx) => scroll.appendChild(makeCard(item, row.items, idx)));
+    row.items.forEach(item => scroll.appendChild(makeCard(item)));
     div.querySelectorAll('.row-arrow').forEach(btn => {
       btn.addEventListener('click', () => scroll.scrollBy({ left: parseInt(btn.dataset.dir) * scroll.clientWidth * 0.85, behavior: 'smooth' }));
     });
@@ -285,8 +314,8 @@ function renderRows(rows) {
   });
 }
 
-// makeCard: rowItems + idx let Next/Prev navigate through the full row
-function makeCard(item, rowItems, idx) {
+// makeCard — clicking art/title starts a radio; clicking artist name opens artist view
+function makeCard(item) {
   const div = document.createElement('div');
   div.className = 'music-card';
   div.innerHTML = `
@@ -297,12 +326,13 @@ function makeCard(item, rowItems, idx) {
     <div class="card-title">${item.title}</div>
     <div class="card-artist">${item.artist || ''}</div>`;
   div.querySelector('img').onload = e => e.target.classList.remove('skeleton');
-  const play = () => {
-    if (rowItems && rowItems.length > 1) playFromList(rowItems, idx);
-    else playNow(item);
-  };
-  div.querySelector('.card-play-btn').addEventListener('click', e => { e.stopPropagation(); play(); });
-  div.addEventListener('click', play);
+  // Art + play button → radio
+  div.querySelector('.card-art-wrap').addEventListener('click', () => playRadio(item));
+  div.querySelector('.card-play-btn').addEventListener('click', e => { e.stopPropagation(); playRadio(item); });
+  div.querySelector('.card-title').addEventListener('click', () => playRadio(item));
+  // Artist name → artist page
+  const artistEl = div.querySelector('.card-artist');
+  if (item.artist) artistEl.addEventListener('click', e => { e.stopPropagation(); openArtist(item.artist, item.thumb); });
   return div;
 }
 
@@ -329,9 +359,11 @@ function resetHeroTimer() {
   clearInterval(_heroTimer);
   _heroTimer = setInterval(() => { _heroIdx = (_heroIdx + 1) % Math.min(_trending.length, 8); renderHero(); }, 7000);
 }
-// Hero buttons play the full trending list
-document.getElementById('hero-play').onclick = () => { if (_trending.length) playFromList(_trending, _heroIdx); };
+// Hero play → radio from that song; hero artist → artist page
+document.getElementById('hero-play').onclick = () => { if (_trending[_heroIdx]) playRadio(_trending[_heroIdx]); };
 document.getElementById('hero-queue').onclick = () => { if (_trending[_heroIdx]) addToQueue(_trending[_heroIdx]); };
+document.getElementById('hero-artist').style.cursor = 'pointer';
+document.getElementById('hero-artist').onclick = () => { const item = _trending[_heroIdx]; if (item?.artist) openArtist(item.artist, item.thumb); };
 
 // ── Search ───────────────────────────────────────────────────────────────────
 let _searchTimer = null, _lastQuery = '';
@@ -405,8 +437,15 @@ async function fullSearch(q, autoPlayId) {
           <div class="result-artist">${item.artist || ''}</div>
         </div>
         <div class="result-dur">${fmtTime(item.duration)}</div>`;
-      // Clicking a result queues ALL results, starts from that index
+      // Row click → queue all results from this index
       row.addEventListener('click', () => { playFromList(results, i); highlightResult(i); });
+      // Artist name click → artist page
+      if (item.artist) {
+        row.querySelector('.result-artist').addEventListener('click', e => {
+          e.stopPropagation();
+          openArtist(item.artist, item.thumb);
+        });
+      }
       grid.appendChild(row);
     });
 
@@ -476,37 +515,87 @@ function highlightResult(idx) {
 function showHome() {
   document.getElementById('home-view').style.display = '';
   document.getElementById('search-view').classList.remove('open');
+  document.getElementById('artist-view').classList.remove('open');
   document.getElementById('search').value = '';
   _lastQuery = '';
 }
 
+// ── Artist page ───────────────────────────────────────────────────────────────
+async function openArtist(artistName, seedThumb) {
+  const name = artistName.split(',')[0].trim();
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('search-view').classList.remove('open');
+  const av = document.getElementById('artist-view');
+  av.classList.add('open');
+  // Header
+  document.getElementById('artist-name').textContent = name;
+  document.getElementById('artist-avatar').src = seedThumb || '';
+  document.getElementById('artist-meta').textContent = 'Loading…';
+  document.getElementById('artist-tracks').innerHTML = '<div style="color:var(--muted);padding:1rem 0">Loading…</div>';
+
+  try {
+    const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    const tracks = data.results || [];
+    document.getElementById('artist-meta').textContent = `${tracks.length} songs found`;
+    // Use first result's thumb if no seedThumb
+    if (!seedThumb && tracks[0]?.thumb) document.getElementById('artist-avatar').src = tracks[0].thumb;
+
+    const container = document.getElementById('artist-tracks');
+    container.innerHTML = '';
+    tracks.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.innerHTML = `
+        <div class="result-num">${i + 1}</div>
+        <img class="result-art" src="${item.thumb || ''}" alt="" loading="lazy">
+        <div class="result-info">
+          <div class="result-title">${item.title}</div>
+          <div class="result-artist">${item.artist || ''}</div>
+        </div>
+        <div class="result-dur">${fmtTime(item.duration)}</div>`;
+      row.addEventListener('click', () => { playFromList(tracks, i); highlightArtistTrack(i); });
+      container.appendChild(row);
+    });
+
+    // Play All → start radio from first track
+    document.getElementById('artist-play-all').onclick = () => { if (tracks.length) playFromList(tracks, 0); };
+  } catch(e) {
+    document.getElementById('artist-tracks').innerHTML = '<div style="color:var(--muted);padding:1rem 0">Failed to load. Try again.</div>';
+  }
+}
+
+function highlightArtistTrack(idx) {
+  document.querySelectorAll('#artist-tracks .result-row').forEach((r, i) => {
+    const numEl = r.querySelector('.result-num');
+    if (i === idx) numEl.innerHTML = '<div class="now-playing-dot"></div>';
+    else numEl.textContent = i + 1;
+  });
+}
+
 // ── Playback ──────────────────────────────────────────────────────────────────
 
-// Play from a list (row / search results) — Next/Prev navigates the list
+// Radio mode: play song + build artist-based queue in background (like Spotify song radio)
+async function playRadio(item) {
+  _queue = [item];
+  _queueIdx = 0;
+  loadAndPlay(item);
+  appendRecommended(item);
+}
+
+// Play from a list (search results / artist page) — Next/Prev navigates the list
 function playFromList(items, idx) {
   _queue = [...items];
   _queueIdx = idx;
   loadAndPlay(_queue[_queueIdx]);
-  updateQueueLabel();
-}
-
-// Play a single item and load recommendations around it
-async function playNow(item) {
-  _queue = [item];
-  _queueIdx = 0;
-  loadAndPlay(item);
-  updateQueueLabel();
-  // Fetch recommendations in background and append to queue
-  appendRecommended(item);
 }
 
 function addToQueue(item) {
   _queue.push(item);
   if (_queueIdx === -1) { _queueIdx = 0; loadAndPlay(_queue[0]); }
-  updateQueueLabel();
 }
 
-// Fetch artist-based recommendations and append to queue (background)
+// Fetch more songs by same artist and append to queue (background)
 async function appendRecommended(seedItem) {
   if (_loadingRecs) return;
   _loadingRecs = true;
@@ -514,24 +603,19 @@ async function appendRecommended(seedItem) {
     const artistQ = seedItem.artist ? seedItem.artist.split(',')[0].trim() : seedItem.title;
     const res = await fetch(`${API}/api/music/search?q=${encodeURIComponent(artistQ)}`);
     const data = await res.json();
-    const recs = (data.results || []).filter(r => r.id !== seedItem.id);
-    // Only append if queue hasn't grown already
-    if (_queue.length <= 2) _queue.push(...recs);
+    const existingIds = new Set(_queue.map(s => s.id));
+    const recs = (data.results || []).filter(r => !existingIds.has(r.id));
+    _queue.push(...recs);
   } catch(e) {}
   _loadingRecs = false;
-}
-
-function updateQueueLabel() {
-  const total = _queue.length;
-  const pos = _queueIdx + 1;
-  const el = document.getElementById('bar-artist');
-  // The artist text will be overwritten by loadAndPlay; this is a no-op hook for future use
 }
 
 async function loadAndPlay(item) {
   document.getElementById('bar-art').src = item.thumb || '';
   document.getElementById('bar-title').textContent = item.title;
-  document.getElementById('bar-artist').textContent = item.artist || '';
+  const barArtist = document.getElementById('bar-artist');
+  barArtist.textContent = item.artist || '';
+  barArtist.onclick = item.artist ? () => openArtist(item.artist, item.thumb) : null;
   document.getElementById('bar-loading').classList.add('show');
   document.getElementById('play-pause').textContent = '⏸';
 
