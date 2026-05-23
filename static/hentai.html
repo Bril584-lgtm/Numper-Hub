@@ -3,35 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Numper H</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<title>Numper Hub — Hentai</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0a0008;
-    --surface: #140010;
-    --surface2: #1c0018;
-    --border: #2e0025;
-    --text: #f5e0f0;
-    --muted: #9e6a8a;
-    --accent: #e91e8c;
-    --accent-dim: rgba(233,30,140,.18);
-    --radius: 10px;
+    --bg: #0a0008; --surface: #140010; --surface2: #1c0018;
+    --border: #2e0025; --text: #f5e0f0; --muted: #9e6a8a;
+    --accent: #e91e8c; --accent-dim: rgba(233,30,140,.18); --radius: 10px;
   }
   html, body { height: 100%; }
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
 
-  /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     background: rgba(10,0,8,.92); backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 1rem;
-    padding: .7rem 1.4rem;
+    display: flex; align-items: center; gap: .8rem;
+    padding: .7rem 1.4rem; flex-wrap: wrap;
   }
   .nav-logo { font-weight: 800; font-size: 1.15rem; color: var(--accent); text-decoration: none; flex-shrink: 0; }
   .nav-logo span { color: var(--text); }
-  .search-wrap { position: relative; flex: 1; max-width: 420px; }
+  .search-wrap { position: relative; flex: 1; max-width: 380px; min-width: 160px; }
   #search { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: .45rem 1rem .45rem 2.4rem; color: var(--text); font-size: .9rem; outline: none; transition: border-color .15s; }
   #search::placeholder { color: var(--muted); }
   #search:focus { border-color: var(--accent); }
@@ -43,15 +35,11 @@
   .sug-info { display: flex; flex-direction: column; gap: .1rem; }
   .sug-title { font-weight: 600; }
   .sug-meta { color: var(--muted); font-size: .78rem; }
-  .nav-back { color: var(--muted); font-size: .85rem; text-decoration: none; white-space: nowrap; }
+  .nav-back { color: var(--muted); font-size: .85rem; text-decoration: none; white-space: nowrap; margin-left: auto; }
   .nav-back:hover { color: var(--text); }
-  .sort-wrap { display: flex; gap: .5rem; }
-  .sort-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: .78rem; padding: .3rem .85rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
-  .sort-btn.active, .sort-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
-  /* ── HERO ── */
   #hero { position: relative; height: 72vh; min-height: 360px; max-height: 580px; overflow: hidden; }
-  #hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; transition: background-image .4s; }
+  #hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; transition: opacity .6s; }
   #hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg) 0%, rgba(10,0,8,.55) 50%, rgba(10,0,8,.2) 100%); }
   #hero-content { position: absolute; bottom: 2.5rem; left: 2.5rem; right: 2.5rem; z-index: 2; max-width: 540px; }
   #hero-badge { display: inline-block; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 4px; margin-bottom: .6rem; }
@@ -68,19 +56,28 @@
   .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.3); cursor: pointer; transition: background .2s, transform .2s; }
   .dot.active { background: var(--accent); transform: scale(1.3); }
 
-  /* ── ROWS ── */
-  #rows { padding: 1.5rem 1.4rem 4rem; }
+  #rows { padding: 1.5rem 0 4rem; }
   .row { margin-bottom: 2.2rem; }
-  .row-label { font-size: 1rem; font-weight: 700; margin-bottom: .8rem; }
-  .row-scroll { display: flex; gap: .8rem; overflow-x: auto; padding-bottom: .5rem; scrollbar-width: none; }
+  .row-label { font-size: 1rem; font-weight: 700; margin-bottom: .6rem; padding: 0 1.4rem; }
+  .row-wrap { position: relative; }
+  .row-scroll { display: flex; gap: .8rem; overflow-x: auto; padding: 6px 1.4rem 16px; scrollbar-width: none; scroll-behavior: smooth; }
   .row-scroll::-webkit-scrollbar { display: none; }
+  .row-arrow {
+    position: absolute; top: 50%; transform: translateY(-60%);
+    width: 34px; height: 68px; border: 1px solid rgba(255,255,255,.2); border-radius: 4px;
+    background: rgba(20,0,16,.92); color: #fff; font-size: 1.5rem;
+    cursor: pointer; z-index: 20; backdrop-filter: blur(6px);
+    transition: background .2s, border-color .2s; display: flex; align-items: center; justify-content: center;
+  }
+  .row-arrow:hover { background: var(--accent); border-color: var(--accent); }
+  .row-left { left: 0; border-radius: 0 4px 4px 0; }
+  .row-right { right: 0; border-radius: 4px 0 0 4px; }
   .card { flex-shrink: 0; width: 130px; cursor: pointer; }
   .card-img { width: 130px; height: 190px; object-fit: cover; border-radius: var(--radius); background: var(--surface2); display: block; transition: transform .18s, box-shadow .18s; }
   .card:hover .card-img { transform: scale(1.04); box-shadow: 0 8px 28px rgba(233,30,140,.35); }
   .card-title { font-size: .78rem; font-weight: 600; margin-top: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-meta { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
 
-  /* ── MODAL ── */
   #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
   #modal-overlay.open { display: flex; }
   #modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 860px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid var(--border); }
@@ -90,21 +87,52 @@
   #modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem; }
   #modal-brand { font-size: .82rem; color: var(--muted); margin-bottom: .6rem; }
   #modal-tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .8rem; }
-  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: .18rem .5rem; font-size: .75rem; color: var(--muted); cursor: pointer; transition: all .1s; }
-  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: .18rem .5rem; font-size: .75rem; color: var(--muted); }
   #modal-synopsis { color: #c4a0b4; font-size: .88rem; line-height: 1.6; margin-bottom: 1.2rem; }
 
-  /* ── PLAYER ── */
   #player-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; display: none; margin-bottom: .8rem; }
   #player-wrap.open { display: block; }
-  #player { width: 100%; height: 100%; display: block; }
-  #player-loading { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem; font-size: .9rem; color: var(--muted); }
+  #player { width: 100%; height: 100%; display: block; background: #000; }
+  #player-loading { position: absolute; inset: 0; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem; font-size: .9rem; color: var(--muted); }
   .spinner-sm { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
-
   .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 3rem auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
   @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* NAV TABS */
+  .nav-tabs { display: flex; gap: .3rem; }
+  .nav-tab { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--text); border-color: var(--accent); }
+  .nav-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* HOME / BROWSE VIEW TOGGLE */
+  #home-view { display: block; }
+  #home-view.hidden { display: none; }
+  #browse-view { display: none; padding: 1.2rem 1.4rem 4rem; }
+  #browse-view.open { display: block; }
+
+  /* BROWSE SORT BAR */
+  #browse-sort-bar { display: flex; gap: .4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .bs-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+  .bs-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .bs-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* BROWSE GRID */
+  #browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
+  .browse-card { cursor: pointer; }
+  .browse-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: var(--radius); background: var(--surface2); display: block; transition: transform .18s, box-shadow .18s; }
+  .browse-card:hover img { transform: scale(1.04); box-shadow: 0 8px 28px rgba(233,30,140,.35); }
+  .browse-card .bc-title { font-size: .78rem; font-weight: 600; margin-top: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .browse-card .bc-meta { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
+
+  /* BROWSE PAGINATION */
+  #browse-pagination { display: none; align-items: center; justify-content: center; gap: 14px; margin-top: 1.5rem; }
+  #browse-pagination.show { display: flex; }
+  .pg-btn { padding: 7px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: .88rem; cursor: pointer; transition: all .2s; }
+  .pg-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .pg-btn:disabled { opacity: .35; cursor: default; }
+  #browse-page-info { font-size: .85rem; color: var(--muted); min-width: 60px; text-align: center; }
 </style>
 </head>
 <body>
@@ -113,17 +141,17 @@
   <a class="nav-logo" href="/"><span>Numper</span> H</a>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
-    <input id="search" type="text" placeholder="Search…" autocomplete="off">
+    <input id="search" type="text" placeholder="Search hentai…" autocomplete="off">
     <div id="suggestions"></div>
   </div>
-  <div class="sort-wrap">
-    <button class="sort-btn active" data-order="views_month">🔥 Trending</button>
-    <button class="sort-btn" data-order="created_at_unix">✨ New</button>
-    <button class="sort-btn" data-order="views_all">👁 All-Time</button>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-view="home">Home</button>
+    <button class="nav-tab" data-view="browse">Browse</button>
   </div>
   <a class="nav-back" href="/">← Hub</a>
 </nav>
 
+<div id="home-view">
 <div id="hero">
   <div id="hero-bg"></div>
   <div id="hero-content">
@@ -139,8 +167,23 @@
 </div>
 
 <div id="rows"></div>
+</div><!-- #home-view -->
 
-<!-- modal -->
+<!-- Browse view -->
+<div id="browse-view">
+  <div id="browse-sort-bar">
+    <button class="bs-btn active" data-order="views_month">🔥 Trending</button>
+    <button class="bs-btn" data-order="created_at_unix">✨ New Releases</button>
+    <button class="bs-btn" data-order="views_all">👁 All-Time</button>
+  </div>
+  <div id="browse-grid"></div>
+  <div id="browse-pagination">
+    <button class="pg-btn" id="browse-prev">← Prev</button>
+    <span id="browse-page-info"></span>
+    <button class="pg-btn" id="browse-next">Next →</button>
+  </div>
+</div>
+
 <div id="modal-overlay">
   <div id="modal">
     <button id="modal-close">✕</button>
@@ -151,8 +194,8 @@
       <div id="modal-tags"></div>
       <div id="modal-synopsis"></div>
       <div id="player-wrap">
-        <video id="player" controls></video>
-        <div id="player-loading"><div class="spinner-sm"></div>Loading stream…</div>
+        <video id="player" controls crossorigin="anonymous" controlsList="nodownload"></video>
+        <div id="player-loading"><div class="spinner-sm"></div><span>Loading stream…</span></div>
       </div>
       <button class="btn btn-primary" id="modal-play">▶ Watch Now</button>
     </div>
@@ -162,22 +205,79 @@
 <script>
 const API = '';
 let _featured = [], _heroIdx = 0, _heroTimer = null;
-let _currentOrder = 'views_month';
 let _hls = null;
+let _browseOrder = 'views_month', _browsePage = 0, _browseLoaded = false;
 
-// ── Home ──────────────────────────────────────────────────────────────────────
-async function loadHome(order = 'views_month') {
-  _currentOrder = order;
-  const res = await fetch(`${API}/api/hentai/browse?order=${order}&page=0`);
-  const data = await res.json();
-  const items = data.results || [];
-  _featured = items.slice(0, 8);
-  _heroIdx = 0;
-  renderHero();
-  renderRows(items);
+// ── View switching ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const v = tab.dataset.view;
+    document.getElementById('home-view').classList.toggle('hidden', v !== 'home');
+    document.getElementById('browse-view').classList.toggle('open', v === 'browse');
+    if (v === 'browse' && !_browseLoaded) { _browseLoaded = true; loadBrowse(); }
+  });
+});
+
+// ── Browse ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.bs-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.bs-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _browseOrder = btn.dataset.order;
+    _browsePage = 0;
+    loadBrowse();
+  });
+});
+
+async function loadBrowse() {
+  const grid = document.getElementById('browse-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Loading…</div>';
+  document.getElementById('browse-pagination').classList.remove('show');
+  try {
+    const res = await fetch(`${API}/api/hentai/browse?order=${_browseOrder}&page=${_browsePage}`);
+    const data = await res.json();
+    const items = data.results || [];
+    grid.innerHTML = '';
+    if (!items.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Nothing found.</div>';
+      return;
+    }
+    items.forEach(item => {
+      const c = document.createElement('div');
+      c.className = 'browse-card';
+      c.innerHTML = `<img src="${item.thumb}" alt="" loading="lazy"><div class="bc-title">${item.title}</div><div class="bc-meta">${item.brand || ''}</div>`;
+      c.querySelector('img').onload = e => e.target.classList.remove('skeleton');
+      c.onclick = () => openItem(item);
+      grid.appendChild(c);
+    });
+    const hasPrev = _browsePage > 0;
+    const hasNext = items.length >= 20;
+    if (hasPrev || hasNext) {
+      document.getElementById('browse-page-info').textContent = `Page ${_browsePage + 1}`;
+      document.getElementById('browse-prev').disabled = !hasPrev;
+      document.getElementById('browse-next').disabled = !hasNext;
+      document.getElementById('browse-pagination').classList.add('show');
+    }
+    grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Failed to load. Try again.</div>';
+  }
 }
 
-// ── Hero ──────────────────────────────────────────────────────────────────────
+document.getElementById('browse-prev').addEventListener('click', () => { if (_browsePage > 0) { _browsePage--; loadBrowse(); } });
+document.getElementById('browse-next').addEventListener('click', () => { _browsePage++; loadBrowse(); });
+
+async function loadHome() {
+  const res = await fetch(`${API}/api/hentai/home`);
+  const data = await res.json();
+  _featured = data.featured || [];
+  _heroIdx = 0;
+  renderHero();
+  renderRows(data.rows || []);
+}
+
 function renderHero() {
   if (!_featured.length) return;
   const item = _featured[_heroIdx];
@@ -199,22 +299,55 @@ function resetTimer() { clearInterval(_heroTimer); _heroTimer = setInterval(() =
 document.getElementById('hero-play').onclick = () => _featured[_heroIdx] && openItem(_featured[_heroIdx]);
 document.getElementById('hero-info').onclick = () => _featured[_heroIdx] && openItem(_featured[_heroIdx]);
 
-// ── Rows ──────────────────────────────────────────────────────────────────────
-function renderRows(items) {
+function _addDragScroll(track) {
+  let dragging = false, startX = 0, startScroll = 0;
+  track.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    dragging = true;
+    startX = e.pageX; startScroll = track.scrollLeft;
+    track.style.scrollBehavior = 'auto';
+    track.style.cursor = 'grabbing';
+    track.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    track.scrollLeft = startScroll - (e.pageX - startX);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    track.style.scrollBehavior = 'smooth';
+    track.style.cursor = 'grab';
+    track.style.userSelect = '';
+  });
+  track.style.cursor = 'grab';
+}
+
+function renderRows(rows) {
   const container = document.getElementById('rows');
   container.innerHTML = '';
-  if (!items.length) return;
-
-  const label = _currentOrder === 'views_month' ? '🔥 Trending This Month'
-              : _currentOrder === 'created_at_unix' ? '✨ New Releases'
-              : '👁 All-Time Most Viewed';
-
-  const div = document.createElement('div');
-  div.className = 'row';
-  div.innerHTML = `<div class="row-label">${label}</div><div class="row-scroll"></div>`;
-  const scroll = div.querySelector('.row-scroll');
-  items.forEach(item => scroll.appendChild(makeCard(item)));
-  container.appendChild(div);
+  rows.forEach(row => {
+    if (!row.items.length) return;
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = `
+      <div class="row-label">${row.label}</div>
+      <div class="row-wrap">
+        <button class="row-arrow row-left" data-dir="-1">&#8249;</button>
+        <div class="row-scroll"></div>
+        <button class="row-arrow row-right" data-dir="1">&#8250;</button>
+      </div>`;
+    const scroll = div.querySelector('.row-scroll');
+    row.items.forEach(item => scroll.appendChild(makeCard(item)));
+    div.querySelectorAll('.row-arrow').forEach(btn => {
+      btn.addEventListener('click', () => {
+        scroll.scrollBy({ left: parseInt(btn.dataset.dir) * scroll.clientWidth * 0.85, behavior: 'smooth' });
+      });
+    });
+    _addDragScroll(scroll);
+    container.appendChild(div);
+  });
 }
 
 function makeCard(item) {
@@ -226,16 +359,6 @@ function makeCard(item) {
   return card;
 }
 
-// ── Sort buttons ──────────────────────────────────────────────────────────────
-document.querySelectorAll('.sort-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadHome(btn.dataset.order);
-  };
-});
-
-// ── Search ────────────────────────────────────────────────────────────────────
 let _searchTimer = null;
 document.getElementById('search').addEventListener('input', e => {
   clearTimeout(_searchTimer);
@@ -264,58 +387,80 @@ async function fetchSug(q) {
 }
 function hideSug() { document.getElementById('suggestions').style.display = 'none'; }
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
 async function openItem(item) {
+  if (!item?.id) return;
   document.getElementById('modal-overlay').classList.add('open');
   document.getElementById('modal-title').textContent = item.title;
   document.getElementById('modal-brand').textContent = item.brand ? `by ${item.brand}` : '';
   document.getElementById('modal-tags').innerHTML = (item.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-  document.getElementById('modal-synopsis').textContent = 'Loading…';
+  document.getElementById('modal-synopsis').innerHTML = 'Loading…';
   document.getElementById('modal-banner').src = item.thumb;
   document.getElementById('player-wrap').classList.remove('open');
   document.getElementById('modal-play').style.display = 'inline-flex';
   destroyPlayer();
 
-  const res = await fetch(`${API}/api/hentai/video?id=${item.id}`);
-  const d = await res.json();
+  let d;
+  try {
+    const res = await fetch(`${API}/api/hentai/video?id=${item.id}`);
+    if (!res.ok) throw new Error(`${res.status}`);
+    d = await res.json();
+    if (!d.stream) throw new Error('no stream');
+  } catch(e) {
+    document.getElementById('modal-synopsis').innerHTML = 'Stream not available for this title.';
+    document.getElementById('modal-play').style.display = 'none';
+    return;
+  }
 
-  document.getElementById('modal-synopsis').textContent = d.synopsis || '';
+  document.getElementById('modal-synopsis').innerHTML = d.synopsis || '';
   document.getElementById('modal-tags').innerHTML = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-
-  document.getElementById('modal-play').onclick = () => playStream(d.stream);
+  document.getElementById('modal-play').onclick = () => playStream(d.stream, d.stream_type || 'mp4');
 }
 
-function playStream(url) {
-  if (!url) { alert('Stream not available'); return; }
+function playStream(url, type) {
+  if (!url) {
+    document.getElementById('modal-synopsis').innerHTML += '<br><em style="color:var(--muted)">Stream not available for this title.</em>';
+    return;
+  }
   const wrap = document.getElementById('player-wrap');
   wrap.classList.add('open');
   document.getElementById('modal-play').style.display = 'none';
-  document.getElementById('player-loading').style.display = 'flex';
+  const loading = document.getElementById('player-loading');
+  const loadingSpan = loading.querySelector('span');
+  const loadingSpinner = loading.querySelector('.spinner-sm');
+  loading.style.display = 'flex';
+  loadingSpan.textContent = 'Loading stream…';
+  loadingSpinner.style.display = 'block';
   wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const video = document.getElementById('player');
   destroyPlayer();
 
-  if (Hls.isSupported()) {
-    _hls = new Hls({
-      enableWorker: true,
-      startLevel: 99,
-      abrEwmaDefaultEstimate: 8000000,
-      capLevelToPlayerSize: false,
-    });
-    _hls.loadSource(url);
-    _hls.attachMedia(video);
-    _hls.on(Hls.Events.MANIFEST_PARSED, (_, d) => {
-      _hls.currentLevel = d.levels.length - 1;
-      document.getElementById('player-loading').style.display = 'none';
-      video.play();
-    });
-    _hls.on(Hls.Events.ERROR, (_, d) => {
-      if (d.fatal) document.getElementById('player-loading').textContent = 'Stream error';
-    });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+  function onReady() { loading.style.display = 'none'; video.play().catch(() => {}); }
+  function onFail(msg) { loadingSpan.textContent = msg || 'Stream error — try reloading.'; loadingSpinner.style.display = 'none'; }
+
+  if (url.includes('.m3u8')) {
+    // HLS stream
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      _hls = new Hls({ startLevel: -1, maxBufferLength: 20, maxMaxBufferLength: 120 });
+      _hls.loadSource(url);
+      _hls.attachMedia(video);
+      _hls.on(Hls.Events.MANIFEST_PARSED, onReady);
+      _hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) onFail('Stream error.'); });
+    } else {
+      video.src = url;
+      video.addEventListener('loadeddata', onReady, { once: true });
+      video.addEventListener('error', () => onFail(), { once: true });
+      video.load();
+    }
+  } else {
+    // MP4 direct
     video.src = url;
-    video.oncanplay = () => { document.getElementById('player-loading').style.display = 'none'; video.play(); };
+    video.addEventListener('loadeddata', onReady, { once: true });
+    video.addEventListener('error', () => onFail('Stream error — could not load video.'), { once: true });
+    // Show buffering indicator while waiting
+    video.addEventListener('waiting', () => { loading.style.display = 'flex'; loadingSpan.textContent = 'Buffering…'; }, { passive: true });
+    video.addEventListener('playing', () => { loading.style.display = 'none'; }, { passive: true });
+    video.load();
   }
 }
 

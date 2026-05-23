@@ -86,6 +86,47 @@ async def anime_page():
     return (STATIC / "anime.html").read_text(encoding="utf-8")
 
 
+@app.get("/music", response_class=HTMLResponse)
+async def music_page():
+    return (STATIC / "music.html").read_text(encoding="utf-8")
+
+
+# ─── Music ────────────────────────────────────────────────────────────────────
+
+@app.get("/api/music/home")
+async def api_music_home():
+    cached = _cached("music_home", 1800)
+    if cached:
+        return cached
+    from sources.music import get_home
+    data = await get_home()
+    return _store("music_home", data)
+
+
+@app.get("/api/music/search")
+async def api_music_search(q: str = Query(..., min_length=1)):
+    from sources.music import search
+    return {"results": await search(q, limit=20)}
+
+
+@app.get("/api/music/suggest")
+async def api_music_suggest(q: str = Query(..., min_length=1)):
+    from sources.music import search
+    return {"results": await search(q, limit=8)}
+
+
+@app.get("/api/music/song")
+async def api_music_song(id: str = Query(...)):
+    cached = _cached(f"music:song:{id}", 3600)
+    if cached:
+        return cached
+    from sources.music import get_song
+    data = await get_song(id)
+    if not data or not data.get("url"):
+        raise HTTPException(status_code=404, detail="Song not found or no stream available")
+    return _store(f"music:song:{id}", data)
+
+
 # ─── Health / key check ───────────────────────────────────────────────────────
 
 @app.get("/api/status")

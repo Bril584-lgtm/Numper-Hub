@@ -3,6 +3,7 @@ import asyncio
 from .playwright_extractor import extract_stream
 
 _SOURCES = {
+    # ── Tier 1: confirmed working, fast CDNs ──────────────────────────────────
     "vidlink": {
         "movie": lambda i: f"https://vidlink.pro/movie/{i}",
         "tv": lambda i, s, e: f"https://vidlink.pro/tv/{i}/{s}/{e}",
@@ -17,19 +18,42 @@ _SOURCES = {
         "referer": "https://player.videasy.net/",
         "origin": "https://player.videasy.net",
     },
+    # ── Tier 2: generally reliable ────────────────────────────────────────────
+    "vidsrc.to": {
+        "movie": lambda i: f"https://vidsrc.to/embed/movie/{i}",
+        "tv": lambda i, s, e: f"https://vidsrc.to/embed/tv/{i}/{s}/{e}",
+        "target": "",
+        "referer": "https://vidsrc.to/",
+        "origin": "https://vidsrc.to",
+    },
+    "embed.su": {
+        "movie": lambda i: f"https://embed.su/embed/movie/{i}",
+        "tv": lambda i, s, e: f"https://embed.su/embed/tv/{i}/{s}/{e}",
+        "target": "",
+        "referer": "https://embed.su/",
+        "origin": "https://embed.su",
+    },
+    "vidsrc.xyz": {
+        "movie": lambda i: f"https://vidsrc.xyz/embed/movie?tmdb={i}",
+        "tv": lambda i, s, e: f"https://vidsrc.xyz/embed/tv?tmdb={i}&season={s}&episode={e}",
+        "target": "",
+        "referer": "https://vidsrc.xyz/",
+        "origin": "https://vidsrc.xyz",
+    },
+    "autoembed": {
+        "movie": lambda i: f"https://autoembed.co/movie/tmdb/{i}",
+        "tv": lambda i, s, e: f"https://autoembed.co/tv/tmdb/{i}-{s}-{e}",
+        "target": "",
+        "referer": "https://autoembed.co/",
+        "origin": "https://autoembed.co",
+    },
+    # ── Tier 3: hit-or-miss ───────────────────────────────────────────────────
     "vidsrc.icu": {
         "movie": lambda i: f"https://vidsrc.icu/embed/movie/{i}",
         "tv": lambda i, s, e: f"https://vidsrc.icu/embed/tv/{i}/{s}/{e}",
         "target": "",
         "referer": "https://vidsrc.icu/",
         "origin": "https://vidsrc.icu",
-    },
-    "moviesapi": {
-        "movie": lambda i: f"https://moviesapi.club/movie/{i}",
-        "tv": lambda i, s, e: f"https://moviesapi.club/tv/{i}-{s}-{e}",
-        "target": "",
-        "referer": "https://moviesapi.club/",
-        "origin": "https://moviesapi.club",
     },
     "2embed": {
         "movie": lambda i: f"https://www.2embed.skin/movie/{i}",
@@ -38,12 +62,12 @@ _SOURCES = {
         "referer": "https://www.2embed.skin/",
         "origin": "https://www.2embed.skin",
     },
-    "autoembed": {
-        "movie": lambda i: f"https://autoembed.co/movie/tmdb/{i}",
-        "tv": lambda i, s, e: f"https://autoembed.co/tv/tmdb/{i}-{s}-{e}",
+    "moviesapi": {
+        "movie": lambda i: f"https://moviesapi.club/movie/{i}",
+        "tv": lambda i, s, e: f"https://moviesapi.club/tv/{i}-{s}-{e}",
         "target": "",
-        "referer": "https://autoembed.co/",
-        "origin": "https://autoembed.co",
+        "referer": "https://moviesapi.club/",
+        "origin": "https://moviesapi.club",
     },
     "vidsrc.me": {
         "movie": lambda i: f"https://vidsrc.me/embed/movie?tmdb={i}",
@@ -61,8 +85,12 @@ _SOURCES = {
     },
 }
 
-# Proven-working sources listed first so they tend to win the race
-_PRIORITY = ["vidlink", "vidsrc.cc", "vidsrc.icu", "moviesapi", "2embed", "autoembed", "vidsrc.me", "superembed"]
+# Priority: T1 proven → T2 reliable → T3 fallbacks
+_PRIORITY = [
+    "vidlink", "vidsrc.cc",                          # T1 — confirmed fast
+    "vidsrc.to", "embed.su", "vidsrc.xyz", "autoembed",  # T2 — reliable
+    "vidsrc.icu", "2embed", "moviesapi", "vidsrc.me", "superembed",  # T3 — fallback
+]
 
 
 async def _try_source(name: str, embed_url: str, cfg: dict) -> dict | None:

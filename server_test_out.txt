@@ -1,0 +1,55 @@
+﻿python : C:\Users\batma\Numper-Hub\server.py:29: DeprecationWarning: 
+At line:1 char:31
++ cd C:\Users\batma\Numper-Hub; python server.py 2>&1 | Out-File -FileP ...
++                               ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\batma\...cationWarning: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [9620]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7778 (Press CTRL+C to quit)
+[startup] Playwright browser ready
+INFO:     127.0.0.1:50543 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50548 - "GET /api/movies/home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51811 - "GET /api/spanish/home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52773 - "GET /api/hentai/home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51297 - "GET /api/movies/search?q=avengers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49763 - "GET /api/spanish/search?q=narcos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49766 - "GET /api/hentai/search?q=demon HTTP/1.1" 200 OK
+[extractor] https://vidlink.pro/movie/299534 -> https://storm.vodvidl.site/proxy/file2%2FgbFtj~KVbTvgRnKRId8jUML8EmU%2BaIV%2BLVw
+INFO:     127.0.0.1:59693 - "GET /api/stream/movie?id=299534&source=vidlink HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53022 - "GET /api/hentai/browse HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53022 - "GET /api/hentai/video?id=reika-wa-karei-na-boku-no-joou-3 HTTP/1.1" 200 OK
+[extractor] https://vidlink.pro/tv/1396/1/1 -> https://storm.vodvidl.site/proxy/file2%2FURvacNgbRRt9YqnSe2X1OhO1bexc2tfhNmwmKw4
+INFO:     127.0.0.1:53027 - "GET /api/stream/tv?id=1396&season=1&ep=1&source=vidlink HTTP/1.1" 200 OK
+[proxy] 403 ref=https://storm.vodvidl.site/ https://storm.vodvidl.site/proxy/file2%2FgbFtj~KVbTvgRnKRId8
+INFO:     127.0.0.1:53877 - "GET /api/proxy?url=https%3A%2F%2Fstorm.vodvidl.site%2Fproxy%2Ffile2%252FgbFtj~KVbTvgRnKRId8jUML8EmU%252BaIV%252BLVw HTTP/1.1" 403 Forbidden
+[proxy] 403 ref=https://storm.vodvidl.site/ https://storm.vodvidl.site/proxy/file2%2FgbFtj~KVbTvgRnKRId8
+INFO:     127.0.0.1:64906 - "GET /api/proxy?url=https%3A%2F%2Fstorm.vodvidl.site%2Fproxy%2Ffile2%252FgbFtj~KVbTvgRnKRId8jUML8EmU%252BaIV%252BLVw HTTP/1.1" 403 Forbidden
+[proxy] 400 ref=https://vidlink.pro/ https://storm.vodvidl.site/proxy/file2%2FgbFtj~KVbTvgRnKRId8
+INFO:     127.0.0.1:54022 - "GET /api/proxy?url=https%3A%2F%2Fstorm.vodvidl.site%2Fproxy%2Ffile2%252FgbFtj~KVbTvgRnKRId8jUML8EmU%252BaIV%252BLVw&ref=https%3A%2F%2Fvidlink.pro%2F HTTP/1.1" 400 Bad Request
+[extractor] https://vidlink.pro/movie/550 -> https://storm.vodvidl.site/proxy/file2%2FSUMXM8CzI4vH429D2w5JnmdH13bgPlQJCxxnNP7
+INFO:     127.0.0.1:53214 - "GET /api/stream/movie?id=550&source=vidlink HTTP/1.1" 200 OK
+[extractor] https://vidsrc.icu/embed/movie/550 -> None
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=vidsrc.icu HTTP/1.1" 502 Bad Gateway
+[extractor] https://moviesapi.club/movie/550 -> None
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=moviesapi HTTP/1.1" 502 Bad Gateway
+[extractor] https://vidsrc.cc/v2/embed/movie/550 -> https://m.media-amazon.com/images/S/al-na-9d5791cf-3faf/d7581114-b247-4103-94b4-
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=vidsrc.cc HTTP/1.1" 200 OK
+[extractor] https://www.2embed.skin/movie/550 -> None
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=2embed HTTP/1.1" 502 Bad Gateway
+[extractor] https://autoembed.co/movie/tmdb/550 -> None
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=autoembed HTTP/1.1" 502 Bad Gateway
+[extractor] https://vidsrc.me/embed/movie?tmdb=550 -> None
+INFO:     127.0.0.1:61371 - "GET /api/stream/movie?id=550&source=vidsrc.me HTTP/1.1" 502 Bad Gateway
+INFO:     127.0.0.1:63304 - "GET /api/stream/movie?id=550&source=vidsrc.cc HTTP/1.1" 200 OK
+[extractor] https://multiembed.mov/directstream.php?video_id=550&tmdb=1 -> None
+INFO:     127.0.0.1:51597 - "GET /api/stream/movie?id=550&source=superembed HTTP/1.1" 502 Bad Gateway
+INFO:     127.0.0.1:62685 - "GET /api/status HTTP/1.1" 200 OK

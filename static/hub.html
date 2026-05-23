@@ -18,6 +18,7 @@
     --amber-dark: #c07d0a;
     --purple: #7c3aed;
     --pink: #e91e8c;
+    --green: #1db954;
   }
   body {
     background: var(--bg);
@@ -144,6 +145,15 @@
   .card-hentai:hover::before { opacity: 1; }
   .card-hentai .card-title { color: var(--pink); }
   .card-hentai .card-cta { background: var(--pink); color: #fff; }
+  .card-music {
+    background: linear-gradient(160deg, #071a0e 0%, #040d07 100%);
+    border-color: #0d3a1a;
+  }
+  .card-music::before { background: radial-gradient(circle at 60% 0%, rgba(29,185,84,.15), transparent 60%); }
+  .card-music:hover { box-shadow: 0 12px 40px rgba(29,185,84,.35); border-color: var(--green); }
+  .card-music:hover::before { opacity: 1; }
+  .card-music .card-title { color: var(--green); }
+  .card-music .card-cta { background: var(--green); color: #000; }
   .card:hover .card-cta { filter: brightness(1.15); }
   footer {
     color: var(--muted);
@@ -185,6 +195,13 @@
     <div class="card-title">Hentai</div>
     <div class="card-desc">Adult anime content. 18+ only.</div>
     <button class="card-cta">Enter</button>
+  </a>
+
+  <a class="card card-music" href="/music">
+    <div class="card-icon">🎵</div>
+    <div class="card-title">Music</div>
+    <div class="card-desc">Stream millions of songs — pop, hip-hop, R&amp;B, rock, Latin, and more. No ads.</div>
+    <button class="card-cta">Listen</button>
   </a>
 </div>
 

@@ -1,4 +1,6 @@
 """hanime.tv — search and stream via unofficial API."""
+import json
+import urllib.parse
 import httpx
 
 SEARCH_URL = "https://search.htv-services.com/"
@@ -11,14 +13,33 @@ HEADERS = {
 }
 
 
+def _parse_hits(data: dict) -> list:
+    raw = data.get("hits") or data.get("results") or []
+    return json.loads(raw) if isinstance(raw, str) else raw
+
+
+def _proxied_img(url: str) -> str:
+    if not url:
+        return ""
+    return f"/api/imgproxy?url={urllib.parse.quote(url, safe='')}"
+
+
+def _pd_stream(dl_url: str) -> str:
+    """Convert pixeldrain share URL to direct API stream URL."""
+    if dl_url and "pixeldrain.com/u/" in dl_url:
+        pid = dl_url.split("/u/")[-1].split("?")[0].strip()
+        return f"https://pixeldrain.com/api/file/{pid}"
+    return ""
+
+
 def _card(item: dict) -> dict:
     return {
-        "id":    item.get("slug") or item.get("id", ""),
+        "id":    item.get("slug") or str(item.get("id", "")),
         "title": item.get("name", ""),
-        "thumb": item.get("cover_url", ""),
+        "thumb": _proxied_img(item.get("cover_url", "") or item.get("poster_url", "")),
         "brand": item.get("brand", ""),
         "views": item.get("views", 0),
-        "tags":  [t.get("text", "") for t in (item.get("hentai_tags") or [])],
+        "tags":  [t.get("text", "") for t in (item.get("hentai_tags") or []) if isinstance(t, dict)],
     }
 
 
@@ -35,9 +56,7 @@ async def browse(order_by: str = "views_month", page: int = 0) -> list[dict]:
     }
     async with httpx.AsyncClient(headers=HEADERS, timeout=15) as c:
         r = await c.post(SEARCH_URL, json=payload)
-    data = r.json()
-    items = data if isinstance(data, list) else (data.get("hits") or data.get("results") or [])
-    return [_card(i) for i in items]
+    return [_card(i) for i in _parse_hits(r.json())]
 
 
 async def search(query: str, page: int = 0) -> list[dict]:
@@ -53,9 +72,7 @@ async def search(query: str, page: int = 0) -> list[dict]:
     }
     async with httpx.AsyncClient(headers=HEADERS, timeout=15) as c:
         r = await c.post(SEARCH_URL, json=payload)
-    data = r.json()
-    items = data if isinstance(data, list) else (data.get("hits") or data.get("results") or [])
-    return [_card(i) for i in items]
+    return [_card(i) for i in _parse_hits(r.json())]
 
 
 async def get_video(slug: str) -> dict:
@@ -63,26 +80,30 @@ async def get_video(slug: str) -> dict:
         r = await c.get(f"{API_URL}/video", params={"id": slug})
     d = r.json()
     v = d.get("hentai_video") or {}
-    manifest = d.get("videos_manifest") or {}
-    servers = manifest.get("servers") or []
+    tags = [t.get("text", "") for t in (d.get("hentai_tags") or []) if isinstance(t, dict)]
 
-    streams = []
-    for server in servers:
-        for s in (server.get("streams") or []):
-            url = s.get("url", "")
-            if url and ".m3u8" in url:
-                streams.append({"url": url, "height": s.get("height", 0)})
+    stream = _pd_stream(d.get("dl_url", ""))
+    stream_type = "mp4" if stream else ""
 
-    streams.sort(key=lambda x: x["height"], reverse=True)
-    best = streams[0]["url"] if streams else ""
+    # Fallback: try HLS servers if no Pixeldrain link
+    if not stream:
+        for server in (d.get("videos_manifest") or {}).get("servers") or []:
+            for s in (server.get("streams") or []):
+                url = s.get("url", "")
+                if url and ".m3u8" in url and "streamable.cloud" not in url:
+                    stream = url
+                    stream_type = "hls"
+                    break
+            if stream:
+                break
 
     return {
-        "id":       slug,
-        "title":    v.get("name", ""),
-        "thumb":    v.get("cover_url", ""),
-        "brand":    v.get("brand", ""),
-        "synopsis": v.get("description", ""),
-        "tags":     [t.get("text", "") for t in (v.get("hentai_tags") or [])],
-        "streams":  streams,
-        "stream":   best,
+        "id":          slug,
+        "title":       v.get("name", ""),
+        "thumb":       _proxied_img(v.get("cover_url", "") or v.get("poster_url", "")),
+        "brand":       v.get("brand", ""),
+        "synopsis":    v.get("description", ""),
+        "tags":        tags,
+        "stream":      stream,
+        "stream_type": stream_type,
     }

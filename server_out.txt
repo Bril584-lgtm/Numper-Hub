@@ -1,0 +1,25 @@
+INFO:     127.0.0.1:58493 - "GET /api/movies/home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58602 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58602 - "GET /movies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58602 - "GET /api/movies/home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55172 - "GET /api/details?id=931285&type=movie HTTP/1.1" 200 OK
+[extractor] https://vidlink.pro/movie/931285 -> None
+INFO:     127.0.0.1:55172 - "GET /api/stream/movie?id=931285&source=vidlink HTTP/1.1" 502 Bad Gateway
+[extractor] https://vidsrc.me/embed/movie?tmdb=931285 -> None
+INFO:     127.0.0.1:55172 - "GET /api/stream/movie?id=931285&source=vidsrc.me HTTP/1.1" 502 Bad Gateway
+[extractor] https://multiembed.mov/directstream.php?video_id=931285&tmdb -> None
+INFO:     127.0.0.1:62091 - "GET /api/stream/movie?id=931285&source=superembed HTTP/1.1" 502 Bad Gateway
+[extractor] https://player.smashy.stream/movie/931285 -> None
+INFO:     127.0.0.1:58734 - "GET /api/stream/movie?id=931285&source=smashystream HTTP/1.1" 502 Bad Gateway
+[extractor] https://www.2embed.skin/movie/931285 -> None
+INFO:     127.0.0.1:50741 - "GET /api/stream/movie?id=931285&source=2embed HTTP/1.1" 502 Bad Gateway
+[extractor] https://frembed.pro/api/film.php?id=931285 -> None
+INFO:     127.0.0.1:50741 - "GET /api/stream/movie?id=931285&source=frembed HTTP/1.1" 502 Bad Gateway
+[extractor] https://frembed.pro/api/film.php?id=931285 -> None
+INFO:     127.0.0.1:57679 - "GET /api/stream/movie?id=931285&source=frembed HTTP/1.1" 502 Bad Gateway
+[extractor] https://vidlink.pro/movie/550 -> https://storm.vodvidl.site/proxy/file2%2FSUMXM8CzI4vH429D2w5JnmdH13bgPlQJCxxnNP7
+INFO:     127.0.0.1:54626 - "GET /api/stream/movie?id=550&source=vidlink HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49492 - "GET /api/details?id=931285&type=movie HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52347 - "GET /api/home HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52348 - "GET /api/home HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50491 - "GET /api/movies/home HTTP/1.1" 200 OK

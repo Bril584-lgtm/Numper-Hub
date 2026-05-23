@@ -30,7 +30,7 @@ async def _get_browser() -> Browser:
     return _browser
 
 
-async def extract_stream(embed_url: str, timeout: int = 20000, target_domain: str = "") -> str | None:
+async def extract_stream(embed_url: str, timeout: int = 14000, target_domain: str = "") -> str | None:
     """Open a new page in the shared browser, intercept network, return first m3u8/mp4 URL."""
     priority: list[str] = []
     fallback: list[str] = []
