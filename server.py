@@ -20,7 +20,7 @@ from config import TMDB_API_KEY
 HISTORY_FILE = Path(__file__).parent / "history.json"
 
 _stream_cache: dict = {}
-_STREAM_TTL = 2700
+_STREAM_TTL = 900  # 15 min — CDN URLs (storm.vodvidl, speedsterwave) expire fast
 
 app = FastAPI(title="Numper Hub", docs_url=None, redoc_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -125,6 +125,28 @@ async def api_music_song(id: str = Query(...)):
     if not data or not data.get("url"):
         raise HTTPException(status_code=404, detail="Song not found or no stream available")
     return _store(f"music:song:{id}", data)
+
+
+@app.get("/api/music/album")
+async def api_music_album(id: str = Query(...)):
+    cached = _cached(f"music:album:{id}", 3600)
+    if cached:
+        return cached
+    from sources.music import get_album
+    data = await get_album(id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Album not found")
+    return _store(f"music:album:{id}", data)
+
+
+@app.get("/api/music/artist")
+async def api_music_artist(id: str = Query(...)):
+    cached = _cached(f"music:artist:{id}", 1800)
+    if cached:
+        return cached
+    from sources.music import get_artist_songs
+    data = await get_artist_songs(id)
+    return _store(f"music:artist:{id}", data)
 
 
 # ─── Health / key check ───────────────────────────────────────────────────────
@@ -237,11 +259,12 @@ async def api_season(id: int = Query(...), season: int = Query(..., ge=1)):
 # ─── Streaming ────────────────────────────────────────────────────────────────
 
 @app.get("/api/stream/movie")
-async def api_stream_movie(id: int = Query(...), source: str = Query(default="auto")):
+async def api_stream_movie(id: int = Query(...), source: str = Query(default="auto"), bust: bool = Query(default=False)):
     cache_key = f"stream:movie:{id}:{source}"
-    cached = _cached(cache_key, 2700)
-    if cached:
-        return cached
+    if not bust:
+        cached = _cached(cache_key, _STREAM_TTL)
+        if cached:
+            return cached
     from sources.vidsrc import get_movie_stream
     result = await get_movie_stream(id, source=source)
     if "error" in result:
@@ -250,11 +273,12 @@ async def api_stream_movie(id: int = Query(...), source: str = Query(default="au
 
 
 @app.get("/api/stream/tv")
-async def api_stream_tv(id: int = Query(...), season: int = Query(..., ge=1), ep: int = Query(..., ge=1), source: str = Query(default="auto")):
+async def api_stream_tv(id: int = Query(...), season: int = Query(..., ge=1), ep: int = Query(..., ge=1), source: str = Query(default="auto"), bust: bool = Query(default=False)):
     cache_key = f"stream:tv:{id}:{season}:{ep}:{source}"
-    cached = _cached(cache_key, 2700)
-    if cached:
-        return cached
+    if not bust:
+        cached = _cached(cache_key, _STREAM_TTL)
+        if cached:
+            return cached
     from sources.vidsrc import get_tv_stream
     result = await get_tv_stream(id, season, ep, source=source)
     if "error" in result:

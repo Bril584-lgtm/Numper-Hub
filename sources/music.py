@@ -38,13 +38,23 @@ def _primary_artist(song: dict) -> str:
             return ", ".join(a.get("name", "") for a in primary if a.get("name"))
     return song.get("primaryArtists") or song.get("artist") or ""
 
+def _primary_artist_id(song: dict) -> str:
+    artists = song.get("artists") or {}
+    if isinstance(artists, dict):
+        primary = artists.get("primary") or []
+        if primary and isinstance(primary, list):
+            return str(primary[0].get("id", ""))
+    return ""
+
 def _card(song: dict) -> dict:
     album = song.get("album") or {}
     return {
         "id":       song.get("id", ""),
         "title":    song.get("name", "") or song.get("title", ""),
         "artist":   _primary_artist(song),
+        "artistId": _primary_artist_id(song),
         "album":    album.get("name", "") if isinstance(album, dict) else str(album),
+        "albumId":  album.get("id", "")  if isinstance(album, dict) else "",
         "year":     str(song.get("year", "") or ""),
         "duration": int(song.get("duration") or 0),
         "thumb":    _best_image(song.get("image", [])),
@@ -71,6 +81,91 @@ async def get_song(song_id: str) -> dict:
     data = r.json()
     songs = data.get("data") or []
     return _card(songs[0]) if songs else {}
+
+
+# ── Album ─────────────────────────────────────────────────────────────────────
+
+async def get_album(album_id: str) -> dict:
+    """Return album metadata + full ordered tracklist."""
+    async with httpx.AsyncClient(headers=HEADERS, timeout=15) as c:
+        r = await c.get(f"{BASE}/albums", params={"id": album_id})
+    data = r.json()
+    album = data.get("data") or {}
+    if not album:
+        return {}
+
+    artists_raw = album.get("artists") or {}
+    primary = artists_raw.get("primary") or [] if isinstance(artists_raw, dict) else []
+    artist_str = ", ".join(a.get("name", "") for a in primary if a.get("name"))
+    artist_id   = str(primary[0].get("id", "")) if primary else ""
+
+    songs = album.get("songs") or []
+    return {
+        "id":        album.get("id", ""),
+        "name":      album.get("name", ""),
+        "artist":    artist_str,
+        "artistId":  artist_id,
+        "year":      str(album.get("year", "") or ""),
+        "thumb":     _best_image(album.get("image", [])),
+        "songCount": len(songs),
+        "tracks":    [_card(s) for s in songs if s.get("id")],
+    }
+
+
+# ── Artist songs (deduped) ────────────────────────────────────────────────────
+
+async def get_artist_songs(artist_id: str, pages: int = 8) -> dict:
+    """
+    Fetch up to `pages` pages of an artist's songs in parallel (10 per page),
+    deduplicate by normalised title, and strip non-original versions.
+    Returns up to 50 unique original tracks sorted by popularity.
+    """
+    async with httpx.AsyncClient(headers=HEADERS, timeout=20) as c:
+        tasks = [
+            c.get(f"{BASE}/artists/{artist_id}/songs",
+                  params={"page": p, "sortBy": "popularity", "sortOrder": "desc"})
+            for p in range(pages)
+        ]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for resp in responses:
+        if isinstance(resp, Exception):
+            continue
+        try:
+            songs = (resp.json().get("data") or {}).get("songs") or []
+            for s in songs:
+                if not s.get("id") or not _is_original(s):
+                    continue
+                tk = _title_key(s)
+                if tk not in seen:
+                    seen.add(tk)
+                    unique.append(s)
+        except Exception:
+            pass
+
+    # Also grab the artist name / image from any successful response
+    artist_name = ""
+    artist_thumb = ""
+    for resp in responses:
+        if isinstance(resp, Exception):
+            continue
+        try:
+            d = resp.json().get("data") or {}
+            if d.get("name"):
+                artist_name  = d["name"]
+                artist_thumb = _best_image(d.get("image") or [])
+                break
+        except Exception:
+            pass
+
+    return {
+        "name":   artist_name,
+        "thumb":  artist_thumb,
+        "total":  len(unique),
+        "tracks": [_card(s) for s in unique[:50]],
+    }
 
 
 # ── Home ──────────────────────────────────────────────────────────────────────

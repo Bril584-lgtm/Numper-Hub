@@ -5,7 +5,8 @@ from playwright.async_api import async_playwright, Browser, Playwright
 
 _MP4_RE = re.compile(r'https?://[^\s"\']+\.mp4(?:\?[^\s"\']*)?(?=$|["\'\s])')
 _IGNORE = {"doubleclick", "googlesyndication", "adservice", "analytics", "pixel",
-           "facebook", "clarity.ms", "hotjar", "intercom", "crisp.chat"}
+           "facebook", "clarity.ms", "hotjar", "intercom", "crisp.chat",
+           "m.media-amazon.com"}  # Amazon CDN serves trailers/previews, not actual streams
 _BLOCK_RES = re.compile(
     r'\.(png|jpe?g|gif|svg|ico|webp|woff2?|ttf|eot|otf)(\?|$)',
     re.IGNORECASE

@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python main.py
+python launch_all.py
 pause

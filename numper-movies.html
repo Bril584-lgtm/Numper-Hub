@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Numper Movies — Cinema Catalog</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #08000a;
+    --ink-2: #100010;
+    --panel: #160010;
+    --panel-2: #1e0018;
+    --panel-3: #280020;
+    --line: #330018;
+    --line-2: #4a0022;
+    --cream: #f4e1e8;
+    --cream-2: #d6c2cc;
+    --parchment: #b09aa8;
+    --muted: #7a5a68;
+    --red: #e50914;
+    --red-2: #ff4d55;
+    --red-soft: rgba(229, 9, 20, 0.14);
+    --red-glow: rgba(229, 9, 20, 0.42);
+    --rose: #c2364a;
+    --serif: "Cormorant Garamond", "Times New Roman", serif;
+    --sans: "Space Grotesk", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--ink);
+    color: var(--cream);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(1200px 700px at 80% -10%, rgba(229, 9, 20, 0.09), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(120, 0, 40, 0.08), transparent 60%);
+  }
+
+  ::selection { background: var(--red); color: var(--ink); }
+
+  /* Marquee strip */
+  .np-marquee-strip {
+    display: flex;
+    gap: 6px;
+    padding: 10px 18px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(229,9,20,0.06), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .np-marquee-dot {
+    width: 6px; height: 6px; flex: 0 0 6px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red-glow);
+    animation: marqueeBlink 2.4s ease-in-out infinite;
+  }
+  .np-marquee-dot:nth-child(odd) { animation-delay: 1.2s; }
+  @keyframes marqueeBlink {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Header */
+  .np-header {
+    position: sticky; top: 0; z-index: 30;
+    background: linear-gradient(180deg, var(--ink) 70%, rgba(8,0,10,0.85));
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .np-header-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 36px 16px; gap: 24px;
+  }
+  .np-brand { display: flex; align-items: center; gap: 14px; }
+  .np-brand-cat {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff4d55, var(--red) 60%, #8b0000);
+    display: grid; place-items: center; font-size: 24px;
+    box-shadow: 0 0 0 1px rgba(229,9,20,0.6), 0 0 24px var(--red-glow), inset 0 0 16px rgba(255,77,85,0.4);
+    position: relative;
+  }
+  .np-brand-cat::before {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%;
+    border: 1px dashed rgba(229,9,20,0.5);
+    animation: spin 14s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .np-brand-name { font-family: var(--serif); font-weight: 600; font-size: 26px; letter-spacing: 0.02em; color: var(--cream); }
+  .np-brand-sub { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; color: var(--muted); margin-top: 4px; }
+
+  .np-nav { display: flex; gap: 28px; align-items: center; }
+  .np-nav-link { color: var(--parchment); text-decoration: none; font-size: 13px; letter-spacing: 0.04em; position: relative; padding: 6px 0; transition: color 160ms; }
+  .np-nav-link:hover { color: var(--cream); }
+  .np-nav-link.is-active { color: var(--red); }
+  .np-nav-link.is-active::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--red); border-radius: 1px; box-shadow: 0 0 8px var(--red-glow); }
+
+  .np-search-wrap { position: relative; flex: 1; max-width: 520px; }
+  .np-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+  .np-search {
+    width: 100%; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 3px; color: var(--cream); font-family: var(--sans); font-size: 14px;
+    padding: 10px 14px 10px 40px; outline: none; transition: border-color 160ms, box-shadow 160ms;
+  }
+  .np-search::placeholder { color: var(--muted); }
+  .np-search:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+  .np-search-kbd {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 2px; padding: 2px 5px;
+  }
+
+  .np-tweak-btn {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+    color: var(--parchment); cursor: pointer; font-family: var(--mono);
+    font-size: 10px; letter-spacing: 0.12em; padding: 8px 12px; transition: all 140ms; white-space: nowrap;
+  }
+  .np-tweak-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* Layout */
+  .np-main { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 130px); }
+
+  /* Sidebar */
+  .np-sidebar {
+    border-right: 1px solid var(--line);
+    padding: 28px 20px;
+    position: sticky; top: 79px; height: calc(100vh - 79px); overflow-y: auto;
+  }
+  .np-sidebar-section { margin-bottom: 28px; }
+  .np-sidebar-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.22em; color: var(--muted); margin-bottom: 10px; }
+
+  .np-filter-btn {
+    display: block; width: 100%; text-align: left; background: transparent;
+    border: 0; color: var(--parchment); cursor: pointer; font-family: var(--sans);
+    font-size: 13px; padding: 6px 10px; border-radius: 2px; transition: all 120ms;
+    letter-spacing: 0.01em;
+  }
+  .np-filter-btn:hover { background: var(--panel); color: var(--cream); }
+  .np-filter-btn.is-active { background: var(--red-soft); color: var(--red); }
+
+  .np-sort-row { display: flex; flex-direction: column; gap: 4px; }
+  .np-sort-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    background: transparent; border: 0; color: var(--parchment); cursor: pointer;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; padding: 6px 10px;
+    border-radius: 2px; transition: all 120ms;
+  }
+  .np-sort-btn:hover { background: var(--panel); color: var(--cream); }
+  .np-sort-btn.is-active { color: var(--red); }
+
+  .np-reset-btn {
+    width: 100%; background: transparent; border: 1px dashed var(--line);
+    border-radius: 2px; color: var(--muted); cursor: pointer; font-family: var(--mono);
+    font-size: 9.5px; letter-spacing: 0.18em; padding: 8px; margin-top: 4px; transition: all 140ms;
+  }
+  .np-reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .np-stamp {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 2px;
+    padding: 10px 12px; margin-top: 20px;
+  }
+  .np-stamp-label { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 4px; }
+  .np-stamp-date { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--cream-2); }
+
+  /* Content */
+  .np-content { padding: 28px 32px; }
+  .np-content-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+  .np-content-count { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
+  .np-content-count span { color: var(--red); }
+
+  /* Grid */
+  .np-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+
+  /* Card */
+  .np-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+    cursor: pointer; overflow: hidden; position: relative; transition: transform 200ms, border-color 200ms, box-shadow 200ms;
+    animation: cardIn 400ms cubic-bezier(.2,.7,.3,1) both;
+  }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .np-card:hover { transform: translateY(-4px); border-color: var(--red); box-shadow: 0 16px 40px -12px var(--red-glow), 0 4px 12px -4px rgba(0,0,0,0.5); }
+
+  .np-card-poster {
+    position: relative; aspect-ratio: 2/3; overflow: hidden;
+    background: var(--panel-2);
+  }
+  .np-card-poster-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, color-mix(in oklab, var(--card-color) 65%, white 8%), transparent 65%),
+                linear-gradient(155deg, var(--card-color), var(--card-accent) 70%, color-mix(in oklab, var(--card-accent) 70%, black));
+  }
+  .np-card-poster-grain {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0 1px, transparent 1px 3px),
+                      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 4px);
+    mix-blend-mode: overlay;
+  }
+  .np-card-poster::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.04) 30%, rgba(0,0,0,0.6)); }
+  .np-card-call { position: absolute; top: 10px; left: 10px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; color: rgba(255,255,255,0.85); z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  .np-card-kind { position: absolute; top: 10px; right: 10px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.1em; background: rgba(229,9,20,0.85); color: white; padding: 2px 6px; border-radius: 1px; z-index: 2; }
+  .np-card-poster-title { position: absolute; bottom: 14px; left: 12px; right: 12px; font-family: var(--serif); font-weight: 600; font-size: 20px; line-height: 1.0; z-index: 2; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+
+  .np-card-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 7px; }
+  .np-card-meta { display: flex; gap: 7px; align-items: center; font-family: var(--mono); font-size: 10.5px; color: var(--parchment); letter-spacing: 0.06em; }
+  .np-card-score { color: var(--red); font-weight: 600; }
+  .np-card-sep { color: var(--line-2); }
+  .np-card-title { font-family: var(--serif); font-size: 17px; font-weight: 600; line-height: 1.15; color: var(--cream); }
+  .np-card-director { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin-top: -2px; }
+  .np-card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .np-tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; padding: 3px 7px; border: 1px solid var(--line); border-radius: 2px; color: var(--parchment); text-transform: uppercase; }
+  .np-tag-mood { color: var(--red); border-color: var(--red); background: var(--red-soft); }
+
+  .np-card-hover {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, transparent, rgba(229,9,20,0.92));
+    color: white; font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+    padding: 22px 14px 12px; display: flex; justify-content: space-between; align-items: center;
+    transform: translateY(100%); transition: transform 240ms cubic-bezier(.2,.7,.3,1); pointer-events: none;
+  }
+  .np-card:hover .np-card-hover { transform: translateY(0); }
+
+  /* Empty */
+  .np-empty { padding: 80px 24px; text-align: center; border: 1px dashed var(--line); border-radius: 4px; background: var(--panel); }
+  .np-empty-cat { font-size: 56px; margin-bottom: 12px; }
+  .np-empty-title { font-family: var(--serif); font-size: 28px; font-style: italic; color: var(--cream); margin-bottom: 8px; }
+  .np-empty-body { font-family: var(--serif); font-size: 16px; color: var(--muted); }
+  .np-empty-reset { background: transparent; border: 0; color: var(--red); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Modal */
+  .np-modal-scrim { position: fixed; inset: 0; background: rgba(4,0,6,0.82); backdrop-filter: blur(6px); z-index: 100; display: grid; place-items: center; padding: 24px; animation: scrimIn 220ms ease-out; }
+  @keyframes scrimIn { from { opacity: 0; } to { opacity: 1; } }
+  .np-modal { width: min(1080px, 96vw); max-height: 90vh; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.75), 0 0 0 1px rgba(229,9,20,0.18); display: grid; grid-template-columns: 380px 1fr; position: relative; animation: modalIn 360ms cubic-bezier(.2,.7,.3,1); }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .np-modal-close { position: absolute; top: 14px; right: 14px; z-index: 5; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: var(--cream); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
+  .np-modal-close:hover { background: var(--red); border-color: var(--red); }
+
+  .np-modal-left { background: var(--ink-2); border-right: 1px solid var(--line); overflow-y: auto; }
+  .np-modal-poster { position: relative; aspect-ratio: 3/4; color: var(--cream); overflow: hidden; }
+  .np-modal-poster-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 20%, color-mix(in oklab, var(--card-color) 65%, white 8%), transparent 65%), linear-gradient(155deg, var(--card-color), var(--card-accent) 70%, color-mix(in oklab, var(--card-accent) 70%, black)); }
+  .np-modal-poster-grain { position: absolute; inset: 0; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.07) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 4px); mix-blend-mode: overlay; }
+  .np-modal-poster::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.55)); }
+  .np-modal-call { position: absolute; top: 18px; left: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: rgba(255,255,255,0.9); z-index: 2; }
+  .np-modal-poster-title { position: absolute; left: 22px; right: 22px; bottom: 62px; font-family: var(--serif); font-weight: 600; font-size: 42px; line-height: 0.95; z-index: 2; text-shadow: 0 2px 8px rgba(0,0,0,0.55); }
+  .np-modal-poster-year { position: absolute; left: 22px; bottom: 38px; font-family: var(--serif); font-style: italic; font-size: 16px; color: rgba(255,255,255,0.92); z-index: 2; }
+  .np-modal-poster-foot { position: absolute; right: 18px; bottom: 18px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; color: rgba(255,255,255,0.65); z-index: 2; }
+
+  .np-modal-right { padding: 36px 38px 32px; overflow-y: auto; max-height: 90vh; }
+  .np-modal-eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--muted); display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .np-modal-title { font-family: var(--serif); font-weight: 600; font-size: 48px; line-height: 1.0; margin: 0; color: var(--cream); letter-spacing: -0.01em; }
+  .np-modal-director { font-family: var(--serif); font-style: italic; font-size: 17px; color: var(--parchment); margin: 6px 0 18px; }
+  .np-modal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+  .np-modal-synopsis { font-family: var(--serif); font-size: 19px; line-height: 1.5; color: var(--cream-2); margin: 0 0 26px; }
+  .np-modal-row { display: flex; gap: 28px; margin-bottom: 26px; padding-bottom: 22px; border-bottom: 1px dashed var(--line); }
+  .np-modal-field { flex: 1; }
+  .np-modal-field-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 5px; }
+  .np-modal-field-value { font-family: var(--serif); font-size: 15px; color: var(--cream-2); line-height: 1.4; }
+
+  .np-modal-verdict { background: var(--ink-2); border: 1px solid var(--line); border-left: 3px solid var(--red); padding: 18px 20px; border-radius: 2px; margin-bottom: 24px; }
+  .np-modal-verdict-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .np-modal-verdict-cat { font-size: 18px; }
+  .np-modal-verdict-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--red); flex: 1; }
+  .np-modal-verdict-score { font-family: var(--mono); font-size: 12px; color: var(--red); border: 1px solid var(--red); padding: 2px 8px; border-radius: 2px; }
+  .np-modal-verdict-text { font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.4; margin: 0; color: var(--cream); }
+  .np-modal-pairing { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); font-family: var(--serif); font-size: 13.5px; color: var(--parchment); display: flex; gap: 8px; }
+  .np-modal-pairing-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; color: var(--muted); align-self: center; white-space: nowrap; }
+
+  .np-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .np-btn { font-family: var(--sans); font-size: 13px; padding: 11px 18px; border-radius: 2px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--cream); transition: all 140ms; }
+  .np-btn:hover { border-color: var(--red); color: var(--red); }
+  .np-btn-primary { background: var(--red); border-color: var(--red); color: white; font-weight: 600; box-shadow: 0 0 24px var(--red-glow); }
+  .np-btn-primary:hover { background: var(--red-2); border-color: var(--red-2); color: white; }
+
+  /* Mascot */
+  .np-numper { position: fixed; right: 28px; bottom: 28px; z-index: 90; display: flex; align-items: flex-end; gap: 14px; }
+  .np-numper-cat { width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff4d55, var(--red) 60%, #6b000a); display: grid; place-items: center; cursor: pointer; border: 0; position: relative; box-shadow: 0 0 0 1px rgba(229,9,20,0.5), 0 0 30px var(--red-glow), 0 12px 28px -8px rgba(0,0,0,0.6), inset 0 0 18px rgba(255,77,85,0.35); transition: transform 200ms; }
+  .np-numper-cat:hover { transform: scale(1.06) rotate(-3deg); }
+  .np-numper-emoji { font-size: 38px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+  .np-numper-glow { position: absolute; inset: -6px; border-radius: 50%; border: 1px dashed rgba(229,9,20,0.55); animation: spin 18s linear infinite; pointer-events: none; }
+  .np-numper-badge { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.18em; background: var(--ink); color: var(--red); padding: 3px 7px; border: 1px solid var(--red); border-radius: 2px; white-space: nowrap; }
+
+  .np-numper-bubble { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--red); border-radius: 3px; padding: 14px 16px 12px; width: 320px; box-shadow: 0 12px 28px -12px rgba(0,0,0,0.6); animation: bubbleIn 320ms cubic-bezier(.2,.7,.3,1); position: relative; }
+  @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) translateX(8px); } to { opacity: 1; transform: none; } }
+  .np-numper-bubble::after { content: ""; position: absolute; right: -7px; bottom: 18px; width: 12px; height: 12px; background: var(--panel); border-right: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
+  .np-numper-bubble-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+  .np-numper-bubble-name { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--red); }
+  .np-numper-bubble-tone { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted); }
+  .np-numper-bubble-text { font-family: var(--serif); font-size: 16.5px; line-height: 1.4; color: var(--cream); margin: 0; min-height: 46px; }
+  .np-numper-caret { color: var(--red); animation: blink 0.9s steps(1) infinite; margin-left: 1px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .np-numper-bubble-actions { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .np-numper-next, .np-numper-close { background: transparent; border: 0; cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--parchment); padding: 2px 4px; }
+  .np-numper-next:hover { color: var(--red); }
+  .np-numper-close:hover { color: var(--cream); }
+
+  @media (max-width: 980px) {
+    .np-main { grid-template-columns: 1fr; }
+    .np-sidebar { position: relative; top: 0; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+    .np-modal { grid-template-columns: 1fr; }
+    .np-modal-left { max-height: 45vh; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+const CATALOG = [
+  { id:"blade-runner-2049", title:"Blade Runner 2049", year:2017, kind:"Film", runtime:"2h 44m", rating:"R", director:"Denis Villeneuve", genres:["Sci-Fi","Noir","Drama"], decade:"2010s", mood:"Contemplative", score:8.0, callNumber:"PN.2017.529.V", shelf:"AISLE 7 · SHELF C", color:"#b03a1a", accent:"#0e1e30", synopsis:"Thirty years on, a replicant blade runner uncovers a long-buried secret that threatens what's left of society.", verdict:"A patient, rain-soaked dirge. Numper stares into the hologram and feels things.", cast:["Ryan Gosling","Harrison Ford","Ana de Armas"], pairing:"After dark. Rain optional but recommended." },
+  { id:"parasite", title:"Parasite", year:2019, kind:"Film", runtime:"2h 12m", rating:"R", director:"Bong Joon-ho", genres:["Thriller","Drama","Dark Comedy"], decade:"2010s", mood:"Unsettling", score:8.5, callNumber:"PN.2019.311.B", shelf:"AISLE 4 · SHELF B", color:"#8b6020", accent:"#1a1408", synopsis:"A poor family schemes their way into the lives of a wealthy household, with cascading consequences.", verdict:"A staircase descends, then descends again. Do not check the basement.", cast:["Song Kang-ho","Lee Sun-kyun","Cho Yeo-jeong"], pairing:"Empty stomach. Then make ram-don." },
+  { id:"mad-max-fury-road", title:"Mad Max: Fury Road", year:2015, kind:"Film", runtime:"2h 0m", rating:"R", director:"George Miller", genres:["Action","Sci-Fi"], decade:"2010s", mood:"Frantic", score:8.1, callNumber:"PN.2015.220.M", shelf:"AISLE 7 · SHELF F", color:"#c04010", accent:"#200a00", synopsis:"In a post-apocalyptic wasteland, a drifter helps a war captain escape a tyrant across the desert.", verdict:"Two hours of pure forward motion. Numper has not blinked since 2015.", cast:["Tom Hardy","Charlize Theron","Nicholas Hoult"], pairing:"Loud speakers. No subtitles needed." },
+  { id:"oppenheimer", title:"Oppenheimer", year:2023, kind:"Film", runtime:"3h 0m", rating:"R", director:"Christopher Nolan", genres:["Drama","History","Sci-Fi"], decade:"2020s", mood:"Bleak", score:8.9, callNumber:"QC.2023.773.N", shelf:"AISLE 9 · SHELF B", color:"#e06010", accent:"#180a00", synopsis:"The story of J. Robert Oppenheimer and his role in the development of the atomic bomb.", verdict:"Three hours. Zero wasted seconds. Numper now fears the light.", cast:["Cillian Murphy","Emily Blunt","Matt Damon","Robert Downey Jr."], pairing:"A dark room. Full volume. No phone." },
+  { id:"dune-part-two", title:"Dune: Part Two", year:2024, kind:"Film", runtime:"2h 46m", rating:"PG-13", director:"Denis Villeneuve", genres:["Sci-Fi","Drama","Epic"], decade:"2020s", mood:"Contemplative", score:8.8, callNumber:"PN.2024.689.V", shelf:"AISLE 7 · SHELF A", color:"#9e7030", accent:"#140e00", synopsis:"Paul Atreides unites with Chani and the Fremen as he seeks revenge against those who destroyed his family.", verdict:"The sandworm scenes alone justify existence. Numper is still in the desert.", cast:["Timothée Chalamet","Zendaya","Rebecca Ferguson","Josh Brolin"], pairing:"IMAX if possible. Otherwise the biggest screen you own." },
+  { id:"the-godfather", title:"The Godfather", year:1972, kind:"Film", runtime:"2h 55m", rating:"R", director:"Francis Ford Coppola", genres:["Crime","Drama"], decade:"1970s", mood:"Cutting", score:9.2, callNumber:"PN.1972.801.C", shelf:"AISLE 1 · SHELF A", color:"#2a1a0a", accent:"#100800", synopsis:"The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.", verdict:"The gold standard. Numper refuses to rank anything else above it.", cast:["Marlon Brando","Al Pacino","James Caan","Diane Keaton"], pairing:"A long Sunday. No interruptions." },
+  { id:"inception", title:"Inception", year:2010, kind:"Film", runtime:"2h 28m", rating:"PG-13", director:"Christopher Nolan", genres:["Sci-Fi","Thriller","Action"], decade:"2010s", mood:"Frantic", score:8.8, callNumber:"PN.2010.355.N", shelf:"AISLE 7 · SHELF D", color:"#2a4a7a", accent:"#080e18", synopsis:"A thief who steals corporate secrets through dream infiltration is offered a chance to have his crimes erased.", verdict:"Numper spun the top and walked away. Some questions stay questions.", cast:["Leonardo DiCaprio","Joseph Gordon-Levitt","Elliot Page","Tom Hardy"], pairing:"Coffee. A notepad. A patient mind." },
+  { id:"spirited-away", title:"Spirited Away", year:2001, kind:"Film", runtime:"2h 5m", rating:"PG", director:"Hayao Miyazaki", genres:["Animation","Fantasy","Family"], decade:"2000s", mood:"Wondrous", score:9.0, callNumber:"PN.2001.011.M", shelf:"AISLE 2 · SHELF A", color:"#c03030", accent:"#140808", synopsis:"A ten-year-old wanders into a spirit world and must work in a bathhouse to free her parents.", verdict:"Numper's most-requested rewatch. Bring tissues for the train scene.", cast:["Rumi Hiiragi","Miyu Irino","Mari Natsuki"], pairing:"Clean kitchen. Steamed buns." },
+  { id:"there-will-be-blood", title:"There Will Be Blood", year:2007, kind:"Film", runtime:"2h 38m", rating:"R", director:"Paul Thomas Anderson", genres:["Drama","Western"], decade:"2000s", mood:"Bleak", score:8.2, callNumber:"PN.2007.118.A", shelf:"AISLE 6 · SHELF A", color:"#5a2010", accent:"#100400", synopsis:"A turn-of-the-century oilman builds an empire in California, consumed by ambition.", verdict:"Numper drinks your milkshake. Numper drinks it up.", cast:["Daniel Day-Lewis","Paul Dano","Ciarán Hinds"], pairing:"A dark room. A long bath. A grudge." },
+  { id:"everything-everywhere", title:"Everything Everywhere All at Once", year:2022, kind:"Film", runtime:"2h 19m", rating:"R", director:"Daniels", genres:["Sci-Fi","Comedy","Drama"], decade:"2020s", mood:"Frantic", score:7.8, callNumber:"PN.2022.804.D", shelf:"AISLE 7 · SHELF G", color:"#a07010", accent:"#140c00", synopsis:"A laundromat owner discovers she can access parallel-universe versions of herself.", verdict:"Bagel. Googly eyes. Taxes. Numper cried at the rocks.", cast:["Michelle Yeoh","Ke Huy Quan","Stephanie Hsu"], pairing:"Good company. Tissues." },
+  { id:"the-dark-knight", title:"The Dark Knight", year:2008, kind:"Film", runtime:"2h 32m", rating:"PG-13", director:"Christopher Nolan", genres:["Action","Thriller","Drama"], decade:"2000s", mood:"Unsettling", score:9.0, callNumber:"PN.2008.246.N", shelf:"AISLE 3 · SHELF A", color:"#1a2a3a", accent:"#06080c", synopsis:"Batman faces the Joker, a criminal mastermind who plunges Gotham into chaos.", verdict:"Ledger changed what a villain could be. Numper still cannot look away.", cast:["Christian Bale","Heath Ledger","Aaron Eckhart","Maggie Gyllenhaal"], pairing:"Night watch. Full dark." },
+  { id:"whiplash", title:"Whiplash", year:2014, kind:"Film", runtime:"1h 47m", rating:"R", director:"Damien Chazelle", genres:["Drama","Music"], decade:"2010s", mood:"Frantic", score:8.5, callNumber:"PN.2014.553.C", shelf:"AISLE 3 · SHELF C", color:"#8b1a1a", accent:"#120404", synopsis:"A young drummer enrolls at a cut-throat music conservatory where his teacher will stop at nothing to get the performance he wants.", verdict:"The ending is 10 minutes of pure cinema. Numper's paws were sweating.", cast:["Miles Teller","J.K. Simmons","Melissa Benoist"], pairing:"Headphones. High volume." },
+  { id:"the-substance", title:"The Substance", year:2024, kind:"Film", runtime:"2h 21m", rating:"R", director:"Coralie Fargeat", genres:["Horror","Sci-Fi"], decade:"2020s", mood:"Unsettling", score:7.4, callNumber:"PN.2024.616.F", shelf:"AISLE 8 · SHELF B", color:"#c0b010", accent:"#141200", synopsis:"A fading celebrity uses a black-market drug to generate a younger, better version of herself.", verdict:"Numper covered his eyes. Numper peeked. Zero regrets.", cast:["Demi Moore","Margaret Qualley","Dennis Quaid"], pairing:"Empty stomach. Bright room." },
+  { id:"the-grand-budapest-hotel", title:"The Grand Budapest Hotel", year:2014, kind:"Film", runtime:"1h 39m", rating:"R", director:"Wes Anderson", genres:["Comedy","Drama"], decade:"2010s", mood:"Wondrous", score:8.1, callNumber:"PN.2014.731.A", shelf:"AISLE 4 · SHELF G", color:"#c07090", accent:"#1a0e14", synopsis:"A legendary concierge and his protégé become embroiled in a murder and a stolen painting.", verdict:"Numper sorted all the shelves by spine color after watching.", cast:["Ralph Fiennes","Tony Revolori","Saoirse Ronan","Adrien Brody"], pairing:"A pastry. Pink wine. Centered framing." },
+  { id:"in-the-mood-for-love", title:"In the Mood for Love", year:2000, kind:"Film", runtime:"1h 38m", rating:"PG", director:"Wong Kar-wai", genres:["Romance","Drama"], decade:"2000s", mood:"Wistful", score:8.1, callNumber:"PN.2000.412.W", shelf:"AISLE 4 · SHELF E", color:"#901030", accent:"#100408", synopsis:"Two neighbors in 1960s Hong Kong discover their spouses are having an affair — with each other.", verdict:"Watch with the lamps low. Then watch it again.", cast:["Maggie Cheung","Tony Leung Chiu-wai"], pairing:"Noodles from a thermos. A red dress, optional." },
+  { id:"arrival", title:"Arrival", year:2016, kind:"Film", runtime:"1h 56m", rating:"PG-13", director:"Denis Villeneuve", genres:["Sci-Fi","Drama"], decade:"2010s", mood:"Contemplative", score:7.9, callNumber:"PN.2016.529.V", shelf:"AISLE 7 · SHELF C", color:"#5a6a58", accent:"#0a0e0a", synopsis:"A linguist is recruited to communicate with newly arrived extraterrestrial visitors.", verdict:"Quiet. Devastating. Numper would like a hug.", cast:["Amy Adams","Jeremy Renner","Forest Whitaker"], pairing:"Single sitting. No phone." },
+  { id:"nope", title:"Nope", year:2022, kind:"Film", runtime:"2h 10m", rating:"R", director:"Jordan Peele", genres:["Horror","Sci-Fi","Thriller"], decade:"2020s", mood:"Unsettling", score:7.0, callNumber:"PN.2022.319.P", shelf:"AISLE 8 · SHELF C", color:"#4a3a6a", accent:"#080610", synopsis:"Two siblings discover something sinister above their horse ranch in the California hills.", verdict:"Don't look up. Numper looked up. Numper regrets looking up.", cast:["Daniel Kaluuya","Keke Palmer","Steven Yeun"], pairing:"Open sky. Total silence." },
+  { id:"past-lives", title:"Past Lives", year:2023, kind:"Film", runtime:"1h 46m", rating:"PG-13", director:"Celine Song", genres:["Drama","Romance"], decade:"2020s", mood:"Wistful", score:7.9, callNumber:"PN.2023.102.S", shelf:"AISLE 4 · SHELF F", color:"#3a5a8c", accent:"#060c18", synopsis:"Two childhood sweethearts are separated, then reunite two decades later in New York.", verdict:"The last ten minutes destroyed Numper in a beautiful way.", cast:["Greta Lee","Teo Yoo","John Magaro"], pairing:"A quiet evening. Someone you love nearby." },
+  { id:"killers-of-flower-moon", title:"Killers of the Flower Moon", year:2023, kind:"Film", runtime:"3h 26m", rating:"R", director:"Martin Scorsese", genres:["Crime","Drama","History"], decade:"2020s", mood:"Bleak", score:7.7, callNumber:"DS.2023.241.S", shelf:"AISLE 9 · SHELF D", color:"#6a3010", accent:"#0e0600", synopsis:"Members of the Osage Nation are murdered after oil is discovered on their land in 1920s Oklahoma.", verdict:"Scorsese at his most furious. Numper demands you pay attention.", cast:["Leonardo DiCaprio","Lily Gladstone","Robert De Niro"], pairing:"A long afternoon. Full attention." },
+  { id:"alien-romulus", title:"Alien: Romulus", year:2024, kind:"Film", runtime:"1h 59m", rating:"R", director:"Fede Álvarez", genres:["Sci-Fi","Horror","Action"], decade:"2020s", mood:"Frantic", score:7.3, callNumber:"PN.2024.819.A", shelf:"AISLE 8 · SHELF A", color:"#3a6a3a", accent:"#060e06", synopsis:"A group of young colonists scavenging a derelict space station discover a terrifying life form.", verdict:"Numper watched through a pillow. The chest scene made him howl.", cast:["Cailee Spaeny","David Jonsson","Archie Renaux"], pairing:"Lights off. No snacks that crunch." },
+];
+
+const NUMPER_LINES = [
+  { tone:"cinephile", text:"The catalog never sleeps. Neither does Numper." },
+  { tone:"opinionated", text:"If the runtime is under 90 minutes, I am suspicious." },
+  { tone:"cozy", text:"It's a perfect night for something with rain in it." },
+  { tone:"wise", text:"Genre is a suggestion. Mood is everything." },
+  { tone:"cinephile", text:"I have seen Parasite eleven times. I notice something new each time." },
+  { tone:"playful", text:"Try filtering by 'Bleak'. I dare you." },
+  { tone:"opinionated", text:"Three-hour runtime is not a warning. It is a promise." },
+  { tone:"cozy", text:"Popcorn is made. The queue is long. I am content." },
+  { tone:"wise", text:"Every great film contains a smaller, quieter film inside it." },
+  { tone:"cinephile", text:"Denis Villeneuve has three entries. This is not a coincidence." },
+];
+
+const GENRES = ["All","Sci-Fi","Drama","Thriller","Action","Comedy","Horror","Animation","Romance","History","Crime","Noir","Western","Fantasy","Dark Comedy","Music","Epic"];
+const MOODS = ["All","Contemplative","Unsettling","Frantic","Cutting","Wondrous","Wistful","Bleak"];
+const DECADES = ["All","2020s","2010s","2000s","1970s"];
+
+// ── APP ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [query, setQuery] = useState("");
+  const [genre, setGenre] = useState("All");
+  const [mood, setMood] = useState("All");
+  const [decade, setDecade] = useState("All");
+  const [sort, setSort] = useState("score");
+  const [modal, setModal] = useState(null);
+  const [bubbleIdx, setBubbleIdx] = useState(0);
+  const [bubbleText, setBubbleText] = useState("");
+  const [bubbleVisible, setBubbleVisible] = useState(true);
+  const [typing, setTyping] = useState(true);
+  const searchRef = useRef(null);
+
+  // Typewriter
+  useEffect(() => {
+    const target = NUMPER_LINES[bubbleIdx].text;
+    let i = 0; setBubbleText(""); setTyping(true);
+    const iv = setInterval(() => {
+      i++;
+      setBubbleText(target.slice(0, i));
+      if (i >= target.length) { clearInterval(iv); setTyping(false); }
+    }, 28);
+    return () => clearInterval(iv);
+  }, [bubbleIdx]);
+
+  // ⌘K / / focus search
+  useEffect(() => {
+    const h = e => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); searchRef.current?.focus(); } if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); searchRef.current?.focus(); } if (e.key === "Escape") { setModal(null); } };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+
+  const filtered = CATALOG.filter(m => {
+    const q = query.toLowerCase();
+    const matchQ = !q || m.title.toLowerCase().includes(q) || m.director.toLowerCase().includes(q) || m.genres.some(g => g.toLowerCase().includes(q)) || m.mood.toLowerCase().includes(q) || m.synopsis.toLowerCase().includes(q) || m.callNumber.toLowerCase().includes(q);
+    const matchG = genre === "All" || m.genres.includes(genre);
+    const matchM = mood === "All" || m.mood === mood;
+    const matchD = decade === "All" || m.decade === decade;
+    return matchQ && matchG && matchM && matchD;
+  }).sort((a, b) => sort === "score" ? b.score - a.score : sort === "year_new" ? b.year - a.year : sort === "year_old" ? a.year - b.year : a.title.localeCompare(b.title));
+
+  const reset = () => { setQuery(""); setGenre("All"); setMood("All"); setDecade("All"); setSort("score"); };
+
+  const returnBy = (() => { const d = new Date(); d.setDate(d.getDate() + 14); return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); })();
+
+  return (
+    <>
+      {/* Marquee */}
+      <div className="np-marquee-strip">
+        {Array.from({length: 60}, (_, i) => <div key={i} className="np-marquee-dot" style={{animationDelay: `${(i*0.12)%2.4}s`}} />)}
+      </div>
+
+      {/* Header */}
+      <header className="np-header">
+        <div className="np-header-inner">
+          <div className="np-brand">
+            <div className="np-brand-cat"><span>🐱</span></div>
+            <div>
+              <div className="np-brand-name">Numper Movies</div>
+              <div className="np-brand-sub">CINEMA CATALOG · {CATALOG.length} TITLES · EST. 2024</div>
+            </div>
+          </div>
+
+          <div className="np-search-wrap">
+            <span className="np-search-icon">⌕</span>
+            <input ref={searchRef} className="np-search" placeholder="Search titles, directors, moods, genres…" value={query} onChange={e => setQuery(e.target.value)} />
+            <span className="np-search-kbd">⌘K</span>
+          </div>
+
+          <nav className="np-nav">
+            <a href="#" className="np-nav-link is-active">Browse</a>
+            <a href="#" className="np-nav-link">Watchlist</a>
+            <a href="#" className="np-nav-link">Numper's Picks</a>
+          </nav>
+        </div>
+      </header>
+
+      {/* Main */}
+      <div className="np-main">
+        {/* Sidebar */}
+        <aside className="np-sidebar">
+          <div className="np-sidebar-section">
+            <div className="np-sidebar-label">DECADE</div>
+            {DECADES.map(d => <button key={d} className={`np-filter-btn${decade===d?" is-active":""}`} onClick={() => setDecade(d)}>{d}</button>)}
+          </div>
+          <div className="np-sidebar-section">
+            <div className="np-sidebar-label">MOOD</div>
+            {MOODS.map(m => <button key={m} className={`np-filter-btn${mood===m?" is-active":""}`} onClick={() => setMood(m)}>{m}</button>)}
+          </div>
+          <div className="np-sidebar-section">
+            <div className="np-sidebar-label">GENRE</div>
+            {GENRES.slice(0,10).map(g => <button key={g} className={`np-filter-btn${genre===g?" is-active":""}`} onClick={() => setGenre(g)}>{g}</button>)}
+          </div>
+          <div className="np-sidebar-section">
+            <div className="np-sidebar-label">SORT BY</div>
+            <div className="np-sort-row">
+              {[["score","Numper Score"],["year_new","Newest First"],["year_old","Oldest First"],["title","A → Z"]].map(([v,l]) =>
+                <button key={v} className={`np-sort-btn${sort===v?" is-active":""}`} onClick={() => setSort(v)}>{l}{sort===v&&" ✦"}</button>
+              )}
+            </div>
+          </div>
+          <button className="np-reset-btn" onClick={reset}>RESHELVE EVERYTHING</button>
+          <div className="np-stamp">
+            <div className="np-stamp-label">RETURN BY</div>
+            <div className="np-stamp-date">{returnBy}</div>
+          </div>
+        </aside>
+
+        {/* Content */}
+        <main className="np-content">
+          <div className="np-content-head">
+            <div className="np-content-count">Showing <span>{filtered.length}</span> of {CATALOG.length} titles</div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="np-empty">
+              <div className="np-empty-cat">🐱</div>
+              <div className="np-empty-title">Nothing on the shelf.</div>
+              <div className="np-empty-body">Numper checked twice. <button className="np-empty-reset" onClick={reset}>Clear the filters</button> and try again.</div>
+            </div>
+          ) : (
+            <div className="np-grid">
+              {filtered.map((m, i) => (
+                <div key={m.id} className="np-card" style={{"--card-color": m.color, "--card-accent": m.accent, animationDelay: `${i*30}ms`}} onClick={() => setModal(m)}>
+                  <div className="np-card-poster">
+                    <div className="np-card-poster-bg" />
+                    <div className="np-card-poster-grain" />
+                    <div className="np-card-call">{m.callNumber}</div>
+                    <div className="np-card-kind">{m.kind.toUpperCase()}</div>
+                    <div className="np-card-poster-title">{m.title}</div>
+                  </div>
+                  <div className="np-card-body">
+                    <div className="np-card-meta">
+                      <span className="np-card-score">{m.score.toFixed(1)}</span>
+                      <span className="np-card-sep">·</span>
+                      <span>{m.year}</span>
+                      <span className="np-card-sep">·</span>
+                      <span>{m.runtime}</span>
+                    </div>
+                    <div className="np-card-title">{m.title}</div>
+                    <div className="np-card-director">{m.director}</div>
+                    <div className="np-card-tags">
+                      <span className="np-tag np-tag-mood">{m.mood}</span>
+                      {m.genres.slice(0,2).map(g => <span key={g} className="np-tag">{g}</span>)}
+                    </div>
+                  </div>
+                  <div className="np-card-hover">
+                    <span>OPEN CARD</span>
+                    <span className="np-card-hover-arrow">→</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Modal */}
+      {modal && (
+        <div className="np-modal-scrim" onClick={e => e.target===e.currentTarget&&setModal(null)}>
+          <div className="np-modal" style={{"--card-color": modal.color, "--card-accent": modal.accent}}>
+            <button className="np-modal-close" onClick={() => setModal(null)}>×</button>
+            <div className="np-modal-left">
+              <div className="np-modal-poster">
+                <div className="np-modal-poster-bg" />
+                <div className="np-modal-poster-grain" />
+                <div className="np-modal-call">{modal.callNumber}</div>
+                <div className="np-modal-poster-title">{modal.title}</div>
+                <div className="np-modal-poster-year">{modal.year}</div>
+                <div className="np-modal-poster-foot">{modal.shelf}</div>
+              </div>
+            </div>
+            <div className="np-modal-right">
+              <div className="np-modal-eyebrow">
+                <span>{modal.kind}</span><span>·</span><span>{modal.decade}</span><span>·</span><span>{modal.rating}</span>
+              </div>
+              <h2 className="np-modal-title">{modal.title}</h2>
+              <div className="np-modal-director">directed by {modal.director}</div>
+              <div className="np-modal-tags">
+                <span className="np-tag np-tag-lg np-tag-mood">{modal.mood}</span>
+                {modal.genres.map(g => <span key={g} className="np-tag np-tag-lg">{g}</span>)}
+              </div>
+              <p className="np-modal-synopsis">{modal.synopsis}</p>
+              <div className="np-modal-row">
+                <div className="np-modal-field"><div className="np-modal-field-label">RUNTIME</div><div className="np-modal-field-value">{modal.runtime}</div></div>
+                <div className="np-modal-field"><div className="np-modal-field-label">CAST</div><div className="np-modal-field-value">{modal.cast.slice(0,3).join(", ")}</div></div>
+                <div className="np-modal-field"><div className="np-modal-field-label">SHELF</div><div className="np-modal-field-value" style={{fontFamily:"var(--mono)",fontSize:"12px"}}>{modal.shelf}</div></div>
+              </div>
+              <div className="np-modal-verdict">
+                <div className="np-modal-verdict-head">
+                  <span className="np-modal-verdict-cat">🐱</span>
+                  <span className="np-modal-verdict-label">NUMPER'S VERDICT</span>
+                  <span className="np-modal-verdict-score">{modal.score.toFixed(1)}</span>
+                </div>
+                <p className="np-modal-verdict-text">"{modal.verdict}"</p>
+                <div className="np-modal-pairing">
+                  <span className="np-modal-pairing-label">PAIRS WITH</span>
+                  <span>{modal.pairing}</span>
+                </div>
+              </div>
+              <div className="np-modal-actions">
+                <button className="np-btn np-btn-primary">+ Add to Watchlist</button>
+                <button className="np-btn">Share</button>
+                <button className="np-btn" onClick={() => setModal(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Numper mascot */}
+      <div className="np-numper">
+        {bubbleVisible && (
+          <div className="np-numper-bubble">
+            <div className="np-numper-bubble-head">
+              <span className="np-numper-bubble-name">NUMPER</span>
+              <span className="np-numper-bubble-tone">— {NUMPER_LINES[bubbleIdx].tone}</span>
+            </div>
+            <p className="np-numper-bubble-text">{bubbleText}{typing && <span className="np-numper-caret">|</span>}</p>
+            <div className="np-numper-bubble-actions">
+              <button className="np-numper-next" onClick={() => setBubbleIdx(i => (i+1)%NUMPER_LINES.length)}>next →</button>
+              <button className="np-numper-close" onClick={() => setBubbleVisible(false)}>dismiss</button>
+            </div>
+          </div>
+        )}
+        <button className="np-numper-cat" onClick={() => { setBubbleVisible(v => !v); if (!bubbleVisible) setBubbleIdx(i => (i+1)%NUMPER_LINES.length); }}>
+          <span className="np-numper-emoji">🐱</span>
+          <div className="np-numper-glow" />
+          <div className="np-numper-badge">NUMPER</div>
+        </button>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

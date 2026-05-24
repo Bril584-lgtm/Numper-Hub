@@ -556,7 +556,7 @@ async function loadEpisodes(id, season) {
 
 async function playTV(id, season, ep, bust = false) {
   showPlayerLoading('Buscando fuente más rápida…');
-  const qs = bust ? `&_t=${Date.now()}` : '';
+  const qs = bust ? '&bust=1' : '';
   const res = await fetch(`${API}/api/stream/tv?id=${id}&season=${season}&ep=${ep}${qs}`);
   if (!res.ok) { setPlayerMsg('No se encontró stream.'); document.getElementById('retry-btn').style.display = 'inline-block'; return; }
   const data = await res.json();
@@ -569,7 +569,7 @@ async function playTV(id, season, ep, bust = false) {
 async function playMovie(bust = false) {
   if (!_currentItem) return;
   showPlayerLoading('Buscando fuente más rápida…');
-  const qs = bust ? `&_t=${Date.now()}` : '';
+  const qs = bust ? '&bust=1' : '';
   const res = await fetch(`${API}/api/stream/movie?id=${_currentItem.id}${qs}`);
   if (!res.ok) { setPlayerMsg('No se encontró stream.'); document.getElementById('retry-btn').style.display = 'inline-block'; return; }
   const data = await res.json();
@@ -602,7 +602,7 @@ function loadPlayer(url, type, referer) {
   if (_hls) { _hls.destroy(); _hls = null; }
   video.pause(); video.src = '';
   function onReady() { loading.style.display = 'none'; video.play().catch(() => {}); }
-  function onFail(detail) { console.error('[español] HLS fatal:', detail); setPlayerMsg('Error de reproducción — prueba otra fuente.'); }
+  function onFail(detail) { console.error('[español] HLS fatal:', detail); setPlayerMsg('Error de reproducción — prueba otra fuente.'); document.getElementById('retry-btn').style.display = 'inline-block'; }
   if (type === 'hls' && Hls.isSupported()) {
     // Try direct first (CDNs like storm.vodvidl have CORS=*), proxy as fallback
     function tryLoad(src, isFallback) {
